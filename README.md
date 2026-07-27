@@ -13,7 +13,8 @@
 1. 阅读[学习入口](docs/00-start-here/README.md)。
 2. 按照[从零到生产部署路线](docs/00-start-here/roadmap-zero-to-production.md)逐阶段执行。
 3. 不理解的词先查[专有名词词典](docs/00-start-here/glossary.md)。
-4. 每个阶段达到 Exit Gate 后才能进入下一阶段。
+4. 按照[本地开发启动](docs/04-engineering/local-development.md)运行系统。
+5. 每个阶段达到 Exit Gate 后才能进入下一阶段。
 
 ## 稳定技术基线
 
@@ -43,6 +44,14 @@
 
 ## 当前状态
 
-当前处于：`阶段 0——项目立项与学习准备`。
+当前已完成：
 
-正式业务代码应在阶段 0～2 的文档完成评审后开始创建。
+- .NET模块化单体工程骨架。
+- React、TypeScript、Material UI和TanStack Query基础Provider。
+- SQL Server 2022本地Docker配置。
+- API Liveness和Readiness健康检查。
+- Problem Details异常基础。
+- 后端、前端和架构测试脚手架。
+- GitHub Actions基础CI。
+
+当前开发入口：`Catalog → Product`垂直切片。
