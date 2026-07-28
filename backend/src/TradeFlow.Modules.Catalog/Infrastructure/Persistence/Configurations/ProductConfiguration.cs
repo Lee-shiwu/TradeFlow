@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TradeFlow.Modules.Catalog.Domain.Products;
+using TradeFlow.Modules.Catalog.Domain.UnitsOfMeasure;
 
 namespace TradeFlow.Modules.Catalog.Infrastructure.Persistence.Configurations;
 
@@ -22,13 +23,13 @@ internal sealed class ProductConfiguration
 
         builder.Property(product => product.OrganisationId).IsRequired();
 
-        builder.Property(product=>product.Sku)
+        builder.Property(product => product.Sku)
             .HasColumnName("SKU")
             .HasMaxLength(Product.MaxSkuLength)
             .IsUnicode(false)
             .IsRequired();
 
-        builder.Property(product=>product.Name)
+        builder.Property(product => product.Name)
             .HasMaxLength(Product.MaxNameLength)
             .IsUnicode()
             .IsRequired();
@@ -85,7 +86,14 @@ internal sealed class ProductConfiguration
             product.Status
 
         })
-            
+
             .HasDatabaseName("IX_Products_OrganisationId_Status");
+
+        builder.HasOne<UnitOfMeasure>()
+            .WithMany()
+            .HasForeignKey(product => product.UnitOfMeasureId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName(
+                    "FK_Products_UnitsOfMeasure_UnitOfMeasureId");
     }
 }
