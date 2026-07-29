@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TradeFlow.Modules.Catalog.Domain.ProductCategories;
 using TradeFlow.Modules.Catalog.Domain.Products;
 using TradeFlow.Modules.Catalog.Domain.UnitsOfMeasure;
 namespace TradeFlow.Modules.Catalog.Infrastructure.Persistence;
@@ -9,6 +10,9 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
     public DbSet<Product> Products => Set<Product>();
 
     public DbSet<UnitOfMeasure> UnitsOfMeasures => Set<UnitOfMeasure>();
+
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("catalog");
