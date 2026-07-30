@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TradeFlow.Modules.Catalog.Domain.Products;
 using TradeFlow.Modules.Catalog.Domain.UnitsOfMeasure;
 using TradeFlow.Modules.Catalog.Domain.ProductCategories;
+using TradeFlow.Modules.Catalog.Domain.TaxCategories;
 
 namespace TradeFlow.Modules.Catalog.Infrastructure.Persistence.Configurations;
 
@@ -95,6 +96,9 @@ internal sealed class ProductConfiguration
         builder.HasIndex(product => product.ProductCategoryId)
             .HasDatabaseName("IX_Products_ProductCategoryId");
 
+        builder.HasIndex(product => product.TaxCategoryId)
+            .HasDatabaseName("IX_Products_TaxCategoryId");
+
         builder.HasOne<UnitOfMeasure>()
             .WithMany()
             .HasConstraintName("FK_Products_UnitsOfMeasure_UnitOfMeasureId")
@@ -106,5 +110,11 @@ internal sealed class ProductConfiguration
             .HasConstraintName("FK_Products_ProductCategories_ProductCategoryId")
             .HasForeignKey(product => product.ProductCategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<TaxCategory>()
+            .WithMany()
+            .HasForeignKey(product => product.TaxCategoryId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Products_TaxCategories_TaxCategoryId");
     }
 }
