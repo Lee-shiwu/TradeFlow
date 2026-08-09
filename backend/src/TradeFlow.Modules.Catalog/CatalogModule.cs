@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
+using TradeFlow.Modules.Catalog.Application.Products.CreateProduct;
 
 namespace TradeFlow.Modules.Catalog;
 
@@ -28,6 +29,8 @@ public static class CatalogModule
                     sqlServerOptions.EnableRetryOnFailure();
                 });
         });
+
+        services.AddScoped<CreateProductHandler>();
 
         return services;
     }

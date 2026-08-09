@@ -6,6 +6,7 @@ using TradeFlow.Modules.Catalog;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Identity;
 using TradeFlow.Modules.Organisations;
+using TradeFlow.Api.Endpoints.Catalog.Products;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +84,8 @@ app.MapGet(
         }))
     .WithName("GetSystemInfo");
 
+
+app.MapCreateProductEndpoint();
 app.Run();
 
 public partial class Program;
