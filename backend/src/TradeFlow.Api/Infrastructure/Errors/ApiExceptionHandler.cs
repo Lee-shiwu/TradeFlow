@@ -16,6 +16,8 @@ public sealed class ApiExceptionHandler(
     {
         (int status, string title, string code) = exception switch
         {
+            NotFoundException notFoundException =>
+                (StatusCodes.Status404NotFound, "Resource not found", notFoundException.Code),
             BusinessRuleException businessException =>
                 (StatusCodes.Status409Conflict, "Business rule conflict", businessException.Code),
             _ =>

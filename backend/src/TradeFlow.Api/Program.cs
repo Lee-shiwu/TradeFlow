@@ -86,6 +86,7 @@ app.MapGet(
 
 
 app.MapCreateProductEndpoint();
+app.MapGetProductByIdEndpoint();
 app.Run();
 
 public partial class Program;

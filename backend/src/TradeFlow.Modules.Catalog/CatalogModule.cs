@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Catalog.Application.Products.CreateProduct;
+using TradeFlow.Modules.Catalog.Application.Products.GetProductById;
 
 namespace TradeFlow.Modules.Catalog;
 
@@ -31,6 +32,7 @@ public static class CatalogModule
         });
 
         services.AddScoped<CreateProductHandler>();
+        services.AddScoped<GetProductByIdHandler>();
 
         return services;
     }
