@@ -1,13 +1,10 @@
+using TradeFlow.Api.Infrastructure.Identity;
 using TradeFlow.Modules.Catalog.Application.Products.GetProductById;
+
 namespace TradeFlow.Api.Endpoints.Catalog.Products;
 
 public static class GetProductByIdEndpoint
 {
-    private const string OrganisationIdHeader =
-       "X-Organisation-Id";
-
-    private const string UserIdHeader =
-        "X-User-Id";
 
     public static IEndpointRouteBuilder MapGetProductByIdEndpoint(this IEndpointRouteBuilder endpoints)
     {
@@ -29,22 +26,17 @@ public static class GetProductByIdEndpoint
         IHostEnvironment environment,
         CancellationToken cancellationToken)
     {
-        if (!TemporaryIdentityIsAllowed(environment))
+
+        IResult? identityError =
+            TemporaryIdentityResolver.TryResolve(httpContext, environment, out TemporaryIdentity identity);
+
+        if (identityError is not null)
         {
-            return CreateAuthenticationNotConfiguredResult();
+            return identityError;
         }
 
-        if (!TryReadGuidHeader(httpContext, OrganisationIdHeader, out Guid organisationId))
-        {
-            return CreateInvalidHeaderResult(OrganisationIdHeader);
-        }
 
-        if (!TryReadGuidHeader(httpContext, UserIdHeader, out _))
-        {
-            return CreateInvalidHeaderResult(UserIdHeader);
-        }
-
-        GetProductByIdQuery query = CreateQuery(productId, organisationId);
+        GetProductByIdQuery query = CreateQuery(productId, identity.OrganisationId);
 
         GetProductByIdResult result =
             await handler.HandleAsync(query, cancellationToken);
@@ -81,36 +73,4 @@ public static class GetProductByIdEndpoint
             );
     }
 
-    private static bool TemporaryIdentityIsAllowed(IHostEnvironment environment)
-    {
-        return environment.IsDevelopment() ||
-            environment.IsEnvironment("Testing");
-    }
-
-    private static IResult CreateAuthenticationNotConfiguredResult()
-    {
-        return Results.Problem(statusCode: StatusCodes.Status501NotImplemented, title: "Authentication is not configured.",
-            detail: "Temporary identity headers are disabled " + "outside Development and Testing.");
-    }
-
-    private static IResult CreateInvalidHeaderResult(string headerName)
-    {
-        Dictionary<string, string[]> errors = new()
-        {
-            [headerName] =
-            [
-                $"Header '{headerName}' must contain " + "a non-empty GUID."
-                ]
-        };
-        return Results.ValidationProblem(errors);
-    }
-
-    private static bool TryReadGuidHeader(HttpContext httpContext, string headerName, out Guid value)
-    {
-        string headerValue =
-            httpContext.Request.Headers[headerName].ToString();
-
-        return Guid.TryParse(headerValue, out value) && value != Guid.Empty;
-
-    }
 }
