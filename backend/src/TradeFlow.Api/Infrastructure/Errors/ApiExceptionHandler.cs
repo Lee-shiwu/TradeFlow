@@ -20,6 +20,8 @@ public sealed class ApiExceptionHandler(
                 (StatusCodes.Status404NotFound, "Resource not found", notFoundException.Code),
             BusinessRuleException businessException =>
                 (StatusCodes.Status409Conflict, "Business rule conflict", businessException.Code),
+            RequestValidationException requestValidationException =>
+                (StatusCodes.Status400BadRequest, "Request validation failed", requestValidationException.Code),
             _ =>
                 (StatusCodes.Status500InternalServerError, "Unexpected server error", "UNEXPECTED_ERROR"),
         };

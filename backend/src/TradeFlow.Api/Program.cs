@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using TradeFlow.Api.Endpoints.Catalog.Products;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
 using TradeFlow.BuildingBlocks.Time;
@@ -6,7 +7,6 @@ using TradeFlow.Modules.Catalog;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Identity;
 using TradeFlow.Modules.Organisations;
-using TradeFlow.Api.Endpoints.Catalog.Products;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -87,6 +87,7 @@ app.MapGet(
 
 app.MapCreateProductEndpoint();
 app.MapGetProductByIdEndpoint();
+app.MapListProductsEndpoint();
 app.Run();
 
 public partial class Program;
