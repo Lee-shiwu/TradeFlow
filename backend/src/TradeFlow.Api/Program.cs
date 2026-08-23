@@ -89,6 +89,8 @@ app.MapCreateProductEndpoint();
 app.MapGetProductByIdEndpoint();
 app.MapListProductsEndpoint();
 app.MapUpdateProductDetailsEndpoint();
+app.MapDeactivateProductEndpoint();
+
 app.Run();
 
 public partial class Program;
