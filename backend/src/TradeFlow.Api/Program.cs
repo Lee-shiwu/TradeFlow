@@ -90,6 +90,7 @@ app.MapGetProductByIdEndpoint();
 app.MapListProductsEndpoint();
 app.MapUpdateProductDetailsEndpoint();
 app.MapDeactivateProductEndpoint();
+app.MapActivateProductEndpoint();
 
 app.Run();
 

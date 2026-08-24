@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TradeFlow.Modules.Catalog.Application.Products.CreateProduct;
 using TradeFlow.Modules.Catalog.Application.Products.DeactivateProduct;
+using TradeFlow.Modules.Catalog.Application.Products.ActivateProduct;
 using TradeFlow.Modules.Catalog.Application.Products.GetProductById;
 using TradeFlow.Modules.Catalog.Application.Products.ListProducts;
 using TradeFlow.Modules.Catalog.Application.Products.UpdateProductDetails;
@@ -39,6 +40,7 @@ public static class CatalogModule
         services.AddScoped<ListProductsHandler>();
         services.AddScoped<UpdateProductDetailsHandler>();
         services.AddScoped<DeactivateProductHandler>();
+        services.AddScoped<ActivateProductHandler>();
 
         return services;
     }
