@@ -82,6 +82,27 @@ public sealed class ListProductsEndpointTests(
                 response.Content.Headers
                     .ContentType?.MediaType);
 
+            string responseJson =
+                await response.Content.ReadAsStringAsync();
+
+            using JsonDocument jsonDocument =
+                JsonDocument.Parse(responseJson);
+
+            JsonElement firstItemJson =
+                jsonDocument.RootElement
+                    .GetProperty("items")[0];
+
+            JsonElement statusElement =
+                firstItemJson.GetProperty("status");
+
+            Assert.Equal(
+                JsonValueKind.String,
+                statusElement.ValueKind);
+
+            Assert.Equal(
+                "Active",
+                statusElement.GetString());
+
             ListProductsResponse? responseBody =
                 await response.Content
                     .ReadFromJsonAsync<ListProductsResponse>();
