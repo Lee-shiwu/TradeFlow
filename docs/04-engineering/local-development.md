@@ -54,9 +54,9 @@ dotnet run `
 地址：
 
 ```text
-http://localhost:5080/health/live
-http://localhost:5080/health/ready
-http://localhost:5080/openapi/v1.json
+http://localhost:6280/health/live
+http://localhost:6280/health/ready
+http://localhost:6280/openapi/v1.json
 ```
 
 ### 3. React
@@ -71,7 +71,7 @@ pnpm dev
 访问：
 
 ```text
-http://localhost:5173
+http://localhost:6173
 ```
 
 Vite会把`/api`和`/health`代理到本地API。
