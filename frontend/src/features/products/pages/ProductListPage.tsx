@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react'
 import {
   Alert,
   Box,
@@ -8,6 +8,7 @@ import {
   FormControl,
   InputLabel,
   LinearProgress,
+  Link,
   MenuItem,
   Pagination,
   Paper,
@@ -21,30 +22,32 @@ import {
   TableRow,
   TextField,
   Typography,
-} from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material/Select";
-import { ApiError } from "../../../shared/api/ApiError";
-import type { ProductStatus } from "../api/productListTypes";
-import { useProducts } from "../hooks/useProducts";
+} from '@mui/material'
+import type { SelectChangeEvent } from '@mui/material/Select'
+import { Link as RouterLink } from 'react-router-dom'
+import { ApiError } from '../../../shared/api/ApiError'
+import type { ProductStatus } from '../api/productListTypes'
+import { useProducts } from '../hooks/useProducts'
 
 export function ProductListPage() {
-  const [searchInput, setSearchInput] = useState("");
-  const [appliedSearch, setAppliedSearch] = useState("");
-  const [status, setStatus] = useState<ProductStatus | "">("");
-  const [pageNumber, setPageNumber] = useState(1);
+  const [searchInput, setSearchInput] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState('')
+  const [status, setStatus] =
+    useState<ProductStatus | ''>('')
+  const [pageNumber, setPageNumber] = useState(1)
 
-  const pageSize = 20;
+  const pageSize = 20
 
   const productsQuery = useProducts({
     search: appliedSearch,
     status: status || undefined,
     pageNumber,
     pageSize,
-  });
+  })
 
   function handleStatusChange(event: SelectChangeEvent) {
-    setStatus(event.target.value as ProductStatus | "");
-    setPageNumber(1);
+    setStatus(event.target.value as ProductStatus | '')
+    setPageNumber(1)
   }
 
   return (
@@ -57,25 +60,29 @@ export function ProductListPage() {
         <Stack
           component="form"
           direction={{
-            xs: "column",
-            sm: "row",
+            xs: 'column',
+            sm: 'row',
           }}
           spacing={2}
           onSubmit={(event) => {
-            event.preventDefault();
-            setAppliedSearch(searchInput.trim());
-            setPageNumber(1);
+            event.preventDefault()
+            setAppliedSearch(searchInput.trim())
+            setPageNumber(1)
           }}
         >
           <TextField
             label="Search"
             placeholder="Search by SKU or name"
             value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
+            onChange={(event) =>
+              setSearchInput(event.target.value)
+            }
           />
 
           <FormControl sx={{ minWidth: 180 }}>
-            <InputLabel id="product-status-label">Status</InputLabel>
+            <InputLabel id="product-status-label">
+              Status
+            </InputLabel>
 
             <Select
               labelId="product-status-label"
@@ -84,9 +91,7 @@ export function ProductListPage() {
               onChange={handleStatusChange}
             >
               <MenuItem value="">All statuses</MenuItem>
-
               <MenuItem value="Active">Active</MenuItem>
-
               <MenuItem value="Inactive">Inactive</MenuItem>
             </Select>
           </FormControl>
@@ -96,14 +101,18 @@ export function ProductListPage() {
           </Button>
         </Stack>
 
-        {productsQuery.isFetching && !productsQuery.isPending && (
-          <LinearProgress />
-        )}
+        {productsQuery.isFetching &&
+          !productsQuery.isPending && (
+            <LinearProgress />
+          )}
 
         {productsQuery.isPending && (
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ alignItems: 'center' }}
+          >
             <CircularProgress size={24} />
-
             <Typography>Loading products...</Typography>
           </Stack>
         )}
@@ -117,7 +126,7 @@ export function ProductListPage() {
                 size="small"
                 disabled={productsQuery.isFetching}
                 onClick={() => {
-                  void productsQuery.refetch();
+                  void productsQuery.refetch()
                 }}
               >
                 Retry
@@ -128,91 +137,116 @@ export function ProductListPage() {
           </Alert>
         )}
 
-        {productsQuery.data && productsQuery.data.items.length === 0 && (
-          <Alert severity="info">No products found.</Alert>
-        )}
+        {productsQuery.data &&
+          productsQuery.data.items.length === 0 && (
+            <Alert severity="info">
+              No products found.
+            </Alert>
+          )}
 
-        {productsQuery.data && productsQuery.data.items.length > 0 && (
-          <Stack spacing={2}>
-            <Typography>
-              Total products: {productsQuery.data.totalCount}
-            </Typography>
+        {productsQuery.data &&
+          productsQuery.data.items.length > 0 && (
+            <Stack spacing={2}>
+              <Typography>
+                Total products: {productsQuery.data.totalCount}
+              </Typography>
 
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>SKU</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created at</TableCell>
-                    <TableCell>Last modified at</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {productsQuery.data.items.map((product) => (
-                    <TableRow key={product.productId} hover>
-                      <TableCell>{product.sku}</TableCell>
-
-                      <TableCell>{product.name}</TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={product.status}
-                          color={
-                            product.status === "Active" ? "success" : "default"
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-
-                      <TableCell>{formatDate(product.createdAt)}</TableCell>
-
-                      <TableCell>
-                        {formatDate(product.lastModifiedAt)}
-                      </TableCell>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>SKU</TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Created at</TableCell>
+                      <TableCell>Last modified at</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
 
-            {productsQuery.data.totalPages > 0 && (
-              <Stack direction="row" sx={{ justifyContent: "center" }}>
-                <Pagination
-                  page={pageNumber}
-                  count={productsQuery.data.totalPages}
-                  disabled={productsQuery.isFetching}
-                  color="primary"
-                  onChange={(_, selectedPage) => {
-                    setPageNumber(selectedPage);
-                  }}
-                />
-              </Stack>
-            )}
-          </Stack>
-        )}
+                  <TableBody>
+                    {productsQuery.data.items.map((product) => (
+                      <TableRow key={product.productId} hover>
+                        <TableCell>
+                          <Link
+                            component={RouterLink}
+                            to={createProductDetailsPath(
+                              product.productId,
+                            )}
+                            underline="hover"
+                          >
+                            {product.sku}
+                          </Link>
+                        </TableCell>
+
+                        <TableCell>{product.name}</TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={product.status}
+                            color={
+                              product.status === 'Active'
+                                ? 'success'
+                                : 'default'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          {formatDate(product.createdAt)}
+                        </TableCell>
+
+                        <TableCell>
+                          {formatDate(product.lastModifiedAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {productsQuery.data.totalPages > 0 && (
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: 'center' }}
+                >
+                  <Pagination
+                    page={pageNumber}
+                    count={productsQuery.data.totalPages}
+                    disabled={productsQuery.isFetching}
+                    color="primary"
+                    onChange={(_, selectedPage) => {
+                      setPageNumber(selectedPage)
+                    }}
+                  />
+                </Stack>
+              )}
+            </Stack>
+          )}
       </Stack>
     </Box>
-  );
+  )
+}
+
+function createProductDetailsPath(productId: string): string {
+  return `/products/${encodeURIComponent(productId)}`
 }
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    return error.detail;
+    return error.detail
   }
 
-  return "Unable to load products.";
+  return 'Unable to load products.'
 }
 
 function formatDate(value: string | null): string {
   if (value === null) {
-    return "—";
+    return '—'
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }

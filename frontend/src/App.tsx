@@ -2,6 +2,7 @@ import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ProductListPage } from "./features/products/pages/ProductListPage";
 import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
+import { ProductDetailsPage } from "./features/products/pages/ProductDetailsPage";
 
 export default function App() {
   return (
@@ -45,6 +46,11 @@ export default function App() {
             <Route path="/" element={<SystemStatusPage />} />
 
             <Route path="/products" element={<ProductListPage />} />
+
+            <Route
+              path="/products/:productId"
+              element={<ProductDetailsPage />}
+            />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
