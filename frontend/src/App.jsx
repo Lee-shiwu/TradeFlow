@@ -3,7 +3,6 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { ProductListPage } from "./features/products/pages/ProductListPage";
 import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
 import { ProductDetailsPage } from "./features/products/pages/ProductDetailsPage";
-
 export default function App() {
   return (
     <Box

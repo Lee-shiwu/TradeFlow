@@ -173,8 +173,8 @@ docs(project): add governance risks and delivery standards
 3. 创建`.NET 10` Solution。
 4. 创建API、BuildingBlocks和首批Module项目。
 5. 创建Unit、Integration、Architecture测试项目。
-6. 创建React、TypeScript和Vite前端。
-7. 配置ESLint、Formatter、TypeScript strict和测试。
+6. 创建React、JavaScript（JSX）和Vite前端。
+7. 配置Oxlint、Formatter、JSDoc数据结构说明和测试。
 8. 创建SQL Server 2022本地Docker Compose。
 9. 创建`global.json`、Central Package Management和lock files。
 10. 实现`/health`和前端API状态页。

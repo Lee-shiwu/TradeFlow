@@ -19,7 +19,7 @@
 ## 稳定技术基线
 
 - Backend：C#、.NET 10 LTS、ASP.NET Core 10、EF Core 10
-- Frontend：React 19.2、TypeScript、Vite、Material UI、TanStack Query
+- Frontend：React 19.2、JavaScript（JSX）、Vite、Material UI、TanStack Query
 - Database：SQL Server 2022；生产环境使用 Azure SQL Database
 - Identity：Microsoft Entra ID
 - Testing：xUnit、Testcontainers、Vitest、Testing Library、Playwright
@@ -47,7 +47,7 @@
 当前已完成：
 
 - .NET模块化单体工程骨架。
-- React、TypeScript、Material UI和TanStack Query基础Provider。
+- React、JavaScript（JSX）、Material UI和TanStack Query基础Provider。
 - SQL Server 2022本地Docker配置。
 - API Liveness和Readiness健康检查。
 - Problem Details异常基础。

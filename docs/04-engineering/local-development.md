@@ -92,10 +92,13 @@ dotnet test TradeFlow.sln --no-build
 Set-Location frontend
 pnpm install --frozen-lockfile
 pnpm lint
-pnpm typecheck
 pnpm test:run
 pnpm build
 ```
+
+前端已迁移为JavaScript：普通源码和Hook使用`.js`，React组件使用`.jsx`。
+不再运行`pnpm typecheck`；构建由Vite完成，质量检查由Lint、测试和构建共同承担。
+VS Code使用`frontend/jsconfig.json`识别项目，JSDoc保留接口字段提示。
 
 ## 停止本地数据库
 

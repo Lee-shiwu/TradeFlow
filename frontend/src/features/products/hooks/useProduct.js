@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getProductById } from "../api/getProductById";
-
-export function useProduct(productId: string | undefined) {
+/**
+ * @param {string | undefined} productId
+ */
+export function useProduct(productId) {
   return useQuery({
     queryKey: ["products", "details", productId],
     queryFn: () => {

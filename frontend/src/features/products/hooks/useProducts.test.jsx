@@ -1,28 +1,25 @@
-import type { PropsWithChildren } from "react";
+/** @typedef {import('react').PropsWithChildren} PropsWithChildren */
+
+/** @typedef {import('../api/productListTypes.js').ListProductsParameters} ListProductsParameters */
+
+/** @typedef {import('../api/productListTypes.js').ListProductsResponse} ListProductsResponse */
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../shared/api/ApiError";
-import type {
-  ListProductsParameters,
-  ListProductsResponse,
-} from "../api/productListTypes";
 import { useProducts } from "./useProducts";
-
 const listProductsMock = vi.hoisted(() => vi.fn());
-
 vi.mock("../api/listProducts", () => ({
   listProducts: listProductsMock,
 }));
-
-const parameters: ListProductsParameters = {
+const parameters = {
   search: "chair",
   status: "Active",
   pageNumber: 1,
   pageSize: 20,
 };
-
-const response: ListProductsResponse = {
+const response = {
   items: [
     {
       productId: "33333333-3333-3333-3333-333333333333",
@@ -41,7 +38,6 @@ const response: ListProductsResponse = {
   totalCount: 1,
   totalPages: 1,
 };
-
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -51,48 +47,36 @@ function createWrapper() {
       },
     },
   });
-
-  return function TestQueryClientProvider({ children }: PropsWithChildren) {
+  return function TestQueryClientProvider({ children }) {
     return (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
   };
 }
-
 describe("useProducts", () => {
   beforeEach(() => {
     listProductsMock.mockReset();
   });
-
   it("is pending while the product request is running", () => {
-    listProductsMock.mockReturnValue(
-      new Promise<ListProductsResponse>(() => {}),
-    );
-
+    listProductsMock.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useProducts(parameters), {
       wrapper: createWrapper(),
     });
-
     expect(result.current.isPending).toBe(true);
   });
-
   it("returns the product list response", async () => {
     listProductsMock.mockResolvedValue(response);
-
     const { result } = renderHook(() => useProducts(parameters), {
       wrapper: createWrapper(),
     });
-
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
-
     expect(listProductsMock).toHaveBeenCalledOnce();
     expect(listProductsMock).toHaveBeenCalledWith(parameters);
     expect(result.current.isPending).toBe(false);
     expect(result.current.data).toEqual(response);
   });
-
   it("returns the API error when the request fails", async () => {
     const apiError = new ApiError(
       500,
@@ -100,32 +84,24 @@ describe("useProducts", () => {
       "An unexpected error occurred.",
       "test-trace-id",
     );
-
     listProductsMock.mockRejectedValue(apiError);
-
     const { result } = renderHook(() => useProducts(parameters), {
       wrapper: createWrapper(),
     });
-
     await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
-
     expect(result.current.error).toBe(apiError);
     expect(result.current.data).toBeUndefined();
   });
-
   it("requests new data when query parameters change", async () => {
     listProductsMock.mockResolvedValue(response);
-
-    const secondPageParameters: ListProductsParameters = {
+    const secondPageParameters = {
       ...parameters,
       pageNumber: 2,
     };
-
     const { result, rerender } = renderHook(
-      (properties: { parameters: ListProductsParameters }) =>
-        useProducts(properties.parameters),
+      (properties) => useProducts(properties.parameters),
       {
         initialProps: {
           parameters,
@@ -133,21 +109,16 @@ describe("useProducts", () => {
         wrapper: createWrapper(),
       },
     );
-
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
-
     rerender({
       parameters: secondPageParameters,
     });
-
     await waitFor(() => {
       expect(listProductsMock).toHaveBeenCalledTimes(2);
     });
-
     expect(listProductsMock).toHaveBeenNthCalledWith(1, parameters);
-
     expect(listProductsMock).toHaveBeenNthCalledWith(2, secondPageParameters);
   });
 });

@@ -23,10 +23,12 @@
 - EF查询默认避免加载不需要的列和导航属性。
 - 写操作显式定义事务边界。
 
-## 3. React和TypeScript规范
+## 3. React和JavaScript规范
 
-- 启用TypeScript strict。
-- 不用`any`绕过类型系统，例外必须说明。
+- 前端统一使用JavaScript；普通逻辑、API和Hook使用`.js`，包含JSX的组件和测试使用`.jsx`。
+- 不新增TypeScript源码、`interface`、类型断言或泛型语法；接口数据结构用JSDoc注释说明字段。
+- JSDoc仅用于文档与编辑器提示，不替代运行时验证；外部输入、表单和环境配置仍需校验。
+- 提交前运行`pnpm lint`、`pnpm test:run`和`pnpm build`。
 - API Server State由TanStack Query管理。
 - 表单使用React Hook Form和Schema验证。
 - 组件区分Container和可复用Presentation责任。

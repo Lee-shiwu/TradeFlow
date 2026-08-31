@@ -1,8 +1,8 @@
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { PropsWithChildren } from 'react'
-import { BrowserRouter } from 'react-router-dom'
+/** @typedef {import('react').PropsWithChildren} PropsWithChildren */
 
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -11,24 +11,25 @@ const queryClient = new QueryClient({
       staleTime: 30_000,
     },
   },
-})
-
+});
 const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#075985',
+      main: "#075985",
     },
     background: {
-      default: '#f4f7f9',
+      default: "#f4f7f9",
     },
   },
   shape: {
     borderRadius: 10,
   },
-})
-
-export function AppProviders({ children }: PropsWithChildren) {
+});
+/**
+ * @param {PropsWithChildren} props
+ */
+export function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
@@ -36,5 +37,5 @@ export function AppProviders({ children }: PropsWithChildren) {
         <BrowserRouter>{children}</BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
-  )
+  );
 }

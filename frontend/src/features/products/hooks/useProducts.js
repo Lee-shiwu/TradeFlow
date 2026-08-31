@@ -1,8 +1,11 @@
+/** @typedef {import('../api/productListTypes.js').ListProductsParameters} ListProductsParameters */
+
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { listProducts } from "../api/listProducts";
-import type { ListProductsParameters } from "../api/productListTypes";
-
-export function useProducts(parameters: ListProductsParameters) {
+/**
+ * @param {ListProductsParameters} parameters
+ */
+export function useProducts(parameters) {
   return useQuery({
     queryKey: ["products", "list", parameters],
     queryFn: () => listProducts(parameters),
