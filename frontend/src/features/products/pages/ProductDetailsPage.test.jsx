@@ -1,19 +1,34 @@
-/** @typedef {import('../api/productDetailsTypes.js').ProductDetails} ProductDetails */
-
-/** @typedef {import('../hooks/useProduct.js').useProduct} useProduct */
-
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../shared/api/ApiError";
 import { ProductDetailsPage } from "./ProductDetailsPage";
+
 const useProductMock = vi.hoisted(() => vi.fn());
+
+const useProductStatusActionMock = vi.hoisted(() => vi.fn());
+
 const refetchMock = vi.hoisted(() => vi.fn());
+const mutateMock = vi.hoisted(() => vi.fn());
+const resetMutationMock = vi.hoisted(() => vi.fn());
+
 vi.mock("../hooks/useProduct", () => ({
   useProduct: useProductMock,
 }));
+
+vi.mock("../hooks/useProductStatusAction", () => ({
+  useProductStatusAction: useProductStatusActionMock,
+}));
+
 const productId = "33333333-3333-3333-3333-333333333333";
+
 const productDetails = {
   productId,
   sku: "CHAIR-001",
@@ -29,7 +44,8 @@ const productDetails = {
   lastModifiedBy: "88888888-8888-8888-8888-888888888888",
   rowVersion: "AAAAAAAAB9E=",
 };
-function configureQuery(values = {}) {
+
+function configureProductQuery(values = {}) {
   useProductMock.mockReturnValue({
     data: values.data,
     error: values.error ?? null,
@@ -39,6 +55,17 @@ function configureQuery(values = {}) {
     refetch: refetchMock,
   });
 }
+
+function configureStatusAction(values = {}) {
+  useProductStatusActionMock.mockReturnValue({
+    mutate: mutateMock,
+    reset: resetMutationMock,
+    error: values.error ?? null,
+    isError: values.isError ?? false,
+    isPending: values.isPending ?? false,
+  });
+}
+
 function renderPage(path = `/products/${productId}`) {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -52,70 +79,105 @@ function renderPage(path = `/products/${productId}`) {
     </MemoryRouter>,
   );
 }
+
 function expectField(label, expectedValue) {
   const labelElement = screen.getByText(label, {
     selector: "dt",
   });
+
   const valueElement = labelElement.nextElementSibling;
+
   expect(valueElement).toHaveTextContent(expectedValue);
 }
+
 function formatExpectedDate(value) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
+
 describe("ProductDetailsPage", () => {
   beforeEach(() => {
     useProductMock.mockReset();
+    useProductStatusActionMock.mockReset();
     refetchMock.mockReset();
+    mutateMock.mockReset();
+    resetMutationMock.mockReset();
+
+    configureStatusAction();
   });
+
   afterEach(() => {
     cleanup();
   });
+
   it("queries the product ID from the route", () => {
-    configureQuery({
+    configureProductQuery({
       data: productDetails,
     });
+
     renderPage();
-    expect(useProductMock).toHaveBeenLastCalledWith(productId);
+
+    expect(useProductMock).toHaveBeenCalledWith(productId);
+
+    expect(useProductStatusActionMock).toHaveBeenCalledWith(productId);
   });
+
   it("shows a loading message while details are loading", () => {
-    configureQuery({
+    configureProductQuery({
       isPending: true,
       isFetching: true,
     });
+
     renderPage();
+
     expect(screen.getByText("Loading product details...")).toBeInTheDocument();
+
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
+
     expect(screen.queryByText("Office Chair")).not.toBeInTheDocument();
   });
+
   it("shows the product details and audit information", () => {
-    configureQuery({
+    configureProductQuery({
       data: productDetails,
     });
+
     renderPage();
+
     expectField("Product ID", productId);
     expectField("SKU", "CHAIR-001");
     expectField("Name", "Office Chair");
+
     expectField("Description", "Ergonomic office chair.");
+
     expectField("Status", "Active");
+
     expectField("Unit of measure ID", productDetails.unitOfMeasureId);
-    expectField("Product category ID", "77777777-7777-7777-7777-777777777777");
+
+    expectField("Product category ID", productDetails.productCategoryId);
+
     expectField("Tax category ID", productDetails.taxCategoryId);
+
     expectField("Created at", formatExpectedDate(productDetails.createdAt));
+
     expectField("Created by", productDetails.createdBy);
+
     expectField(
       "Last modified at",
-      formatExpectedDate("2026-08-28T01:30:00+00:00"),
+      formatExpectedDate(productDetails.lastModifiedAt),
     );
-    expectField("Last modified by", "88888888-8888-8888-8888-888888888888");
+
+    expectField("Last modified by", productDetails.lastModifiedBy);
+
     expect(
       screen.queryByText(productDetails.rowVersion),
     ).not.toBeInTheDocument();
   });
-  it("shows placeholders for empty optional information", () => {
-    configureQuery({
+
+  it("shows placeholders for optional information", () => {
+    configureProductQuery({
       data: {
         ...productDetails,
         description: "",
@@ -124,14 +186,17 @@ describe("ProductDetailsPage", () => {
         lastModifiedBy: null,
       },
     });
+
     renderPage();
+
     expectField("Description", "—");
     expectField("Product category ID", "—");
     expectField("Last modified at", "—");
     expectField("Last modified by", "—");
   });
-  it("shows a not-found message and hides stale details after a 404", () => {
-    configureQuery({
+
+  it("shows a not-found message after a 404", () => {
+    configureProductQuery({
       data: productDetails,
       isError: true,
       error: new ApiError(
@@ -141,18 +206,26 @@ describe("ProductDetailsPage", () => {
         "not-found-trace-id",
       ),
     });
+
     renderPage();
+
     expect(screen.getByRole("alert")).toHaveTextContent(
       "The selected product does not exist or is not available in your organisation.",
     );
+
     expect(screen.queryByText("Office Chair")).not.toBeInTheDocument();
+
     expect(
-      screen.queryByRole("button", { name: "Retry" }),
+      screen.queryByRole("button", {
+        name: "Retry",
+      }),
     ).not.toBeInTheDocument();
   });
+
   it("shows the API error and retries the request", async () => {
     const user = userEvent.setup();
-    configureQuery({
+
+    configureProductQuery({
       isError: true,
       error: new ApiError(
         500,
@@ -161,25 +234,37 @@ describe("ProductDetailsPage", () => {
         "server-error-trace-id",
       ),
     });
+
     renderPage();
+
     expect(screen.getByRole("alert")).toHaveTextContent(
       "The product service is unavailable.",
     );
-    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Retry",
+      }),
+    );
+
     expect(refetchMock).toHaveBeenCalledOnce();
   });
-  it("shows a generic message for an unknown error", () => {
-    configureQuery({
+
+  it("shows a generic query error message", () => {
+    configureProductQuery({
       isError: true,
       error: new Error("Connection failed."),
     });
+
     renderPage();
+
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Unable to load product details.",
     );
   });
-  it("disables retry while a request is running", () => {
-    configureQuery({
+
+  it("disables retry while details are refreshing", () => {
+    configureProductQuery({
       isError: true,
       isFetching: true,
       error: new ApiError(
@@ -188,52 +273,353 @@ describe("ProductDetailsPage", () => {
         "The product service is unavailable.",
       ),
     });
+
     renderPage();
-    const retryButton = screen.getByRole("button", {
-      name: "Retry",
-    });
-    expect(retryButton).toBeDisabled();
-    expect(refetchMock).not.toHaveBeenCalled();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Retry",
+      }),
+    ).toBeDisabled();
   });
-  it("keeps product details visible during a background refresh", () => {
-    configureQuery({
+
+  it("keeps details visible during background refresh", () => {
+    configureProductQuery({
       data: productDetails,
       isFetching: true,
     });
+
     renderPage();
+
     expectField("Name", "Office Chair");
+
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
+
     expect(
       screen.queryByText("Loading product details..."),
     ).not.toBeInTheDocument();
   });
-  it("shows a missing-ID message instead of an endless loading state", () => {
-    configureQuery({
+
+  it("shows a missing-ID message", () => {
+    configureProductQuery({
       isPending: true,
-      isFetching: false,
     });
+
     renderPage("/missing-product-id");
-    expect(useProductMock).toHaveBeenLastCalledWith(undefined);
+
+    expect(useProductMock).toHaveBeenCalledWith(undefined);
+
+    expect(useProductStatusActionMock).toHaveBeenCalledWith("");
+
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Product ID is missing.",
     );
+
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
-  it("returns to the product list when the back link is clicked", async () => {
+
+  it("returns to the product list", async () => {
     const user = userEvent.setup();
-    configureQuery({
+
+    configureProductQuery({
       data: productDetails,
     });
+
     renderPage();
+
     const backLink = screen.getByRole("link", {
       name: "Back to products",
     });
+
     expect(backLink).toHaveAttribute("href", "/products");
+
     await user.click(backLink);
+
     expect(
       await screen.findByRole("heading", {
         name: "Product list",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("shows deactivate for an active product", () => {
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button", {
+        name: "Activate product",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows activate for an inactive product", () => {
+    configureProductQuery({
+      data: {
+        ...productDetails,
+        status: "Inactive",
+      },
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Activate product",
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button", {
+        name: "Deactivate product",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens and cancels the confirmation dialog", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText(/Deactivate Office Chair/),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+
+  it("submits the deactivate action with rowVersion", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    expect(mutateMock).toHaveBeenCalledOnce();
+
+    expect(mutateMock).toHaveBeenCalledWith(
+      {
+        action: "deactivate",
+        rowVersion: productDetails.rowVersion,
+      },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+      }),
+    );
+  });
+
+  it("submits the activate action with rowVersion", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: {
+        ...productDetails,
+        status: "Inactive",
+      },
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Activate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Activate product",
+      }),
+    );
+
+    expect(mutateMock).toHaveBeenCalledWith(
+      {
+        action: "activate",
+        rowVersion: productDetails.rowVersion,
+      },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+      }),
+    );
+  });
+
+  it("closes the dialog after a successful action", async () => {
+    const user = userEvent.setup();
+
+    mutateMock.mockImplementation((_parameters, options) => {
+      options.onSuccess();
+    });
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("disables the status button while a request is pending", () => {
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureStatusAction({
+      isPending: true,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("shows a concurrency error and reloads the product", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureStatusAction({
+      isError: true,
+      error: new ApiError(
+        409,
+        "PRODUCT_CONCURRENCY_CONFLICT",
+        "The product was changed by another request.",
+        "conflict-trace-id",
+      ),
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      "The product was changed by another request.",
+    );
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Reload product",
+      }),
+    );
+
+    expect(refetchMock).toHaveBeenCalledOnce();
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows a normal status action API error", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureStatusAction({
+      isError: true,
+      error: new ApiError(
+        500,
+        "UNEXPECTED_ERROR",
+        "Unable to contact the product service.",
+      ),
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      "Unable to contact the product service.",
+    );
+
+    expect(
+      within(dialog).queryByRole("button", {
+        name: "Reload product",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
