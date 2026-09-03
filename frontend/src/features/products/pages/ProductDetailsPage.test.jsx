@@ -14,10 +14,22 @@ import { ProductDetailsPage } from "./ProductDetailsPage";
 const useProductMock = vi.hoisted(() => vi.fn());
 
 const useProductStatusActionMock = vi.hoisted(() => vi.fn());
+const useUpdateProductDetailsMock = vi.hoisted(() => vi.fn());
+const editProductDetailsDialogMock = vi.hoisted(() => vi.fn());
+
+const updateRequest = vi.hoisted(() => ({
+  name: "Updated Office Chair",
+  description: "Updated chair description.",
+  productCategoryId: null,
+  taxCategoryId: "55555555-5555-5555-5555-555555555555",
+  rowVersion: "AAAAAAAAB9E=",
+}));
 
 const refetchMock = vi.hoisted(() => vi.fn());
 const mutateMock = vi.hoisted(() => vi.fn());
 const resetMutationMock = vi.hoisted(() => vi.fn());
+const mutateUpdateAsyncMock = vi.hoisted(() => vi.fn());
+const resetUpdateMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProduct", () => ({
   useProduct: useProductMock,
@@ -25,6 +37,51 @@ vi.mock("../hooks/useProduct", () => ({
 
 vi.mock("../hooks/useProductStatusAction", () => ({
   useProductStatusAction: useProductStatusActionMock,
+}));
+
+vi.mock("../hooks/useUpdateProductDetails", () => ({
+  useUpdateProductDetails: useUpdateProductDetailsMock,
+}));
+
+vi.mock("../components/EditProductDetailsDialog", () => ({
+  EditProductDetailsDialog: (properties) => {
+    editProductDetailsDialogMock(properties);
+
+    if (!properties.open) {
+      return null;
+    }
+
+    return (
+      <div role="dialog" aria-label="Edit product dialog">
+        <button
+          type="button"
+          onClick={() => {
+            properties.onClose();
+          }}
+        >
+          Close edit dialog
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            void properties.onSubmit(updateRequest);
+          }}
+        >
+          Submit product update
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            properties.onReload();
+          }}
+        >
+          Reload edited product
+        </button>
+      </div>
+    );
+  },
 }));
 
 const productId = "33333333-3333-3333-3333-333333333333";
@@ -66,6 +123,15 @@ function configureStatusAction(values = {}) {
   });
 }
 
+function configureUpdateMutation(values = {}) {
+  useUpdateProductDetailsMock.mockReturnValue({
+    mutateAsync: mutateUpdateAsyncMock,
+    reset: resetUpdateMutationMock,
+    error: values.error ?? null,
+    isPending: values.isPending ?? false,
+  });
+}
+
 function renderPage(path = `/products/${productId}`) {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -101,11 +167,17 @@ describe("ProductDetailsPage", () => {
   beforeEach(() => {
     useProductMock.mockReset();
     useProductStatusActionMock.mockReset();
+    useUpdateProductDetailsMock.mockReset();
+    editProductDetailsDialogMock.mockReset();
     refetchMock.mockReset();
     mutateMock.mockReset();
     resetMutationMock.mockReset();
+    mutateUpdateAsyncMock.mockReset();
+    resetUpdateMutationMock.mockReset();
 
     configureStatusAction();
+    configureUpdateMutation();
+    mutateUpdateAsyncMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -122,6 +194,7 @@ describe("ProductDetailsPage", () => {
     expect(useProductMock).toHaveBeenCalledWith(productId);
 
     expect(useProductStatusActionMock).toHaveBeenCalledWith(productId);
+    expect(useUpdateProductDetailsMock).toHaveBeenCalledWith(productId);
   });
 
   it("shows a loading message while details are loading", () => {
@@ -310,6 +383,7 @@ describe("ProductDetailsPage", () => {
     expect(useProductMock).toHaveBeenCalledWith(undefined);
 
     expect(useProductStatusActionMock).toHaveBeenCalledWith("");
+    expect(useUpdateProductDetailsMock).toHaveBeenCalledWith("");
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Product ID is missing.",
@@ -619,6 +693,209 @@ describe("ProductDetailsPage", () => {
     expect(
       within(dialog).queryByRole("button", {
         name: "Reload product",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the edit product dialog", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    );
+
+    expect(resetUpdateMutationMock).toHaveBeenCalledOnce();
+
+    expect(
+      screen.getByRole("dialog", {
+        name: "Edit product dialog",
+      }),
+    ).toBeInTheDocument();
+
+    const dialogProperties = editProductDetailsDialogMock.mock.calls.at(-1)[0];
+
+    expect(dialogProperties).toEqual(
+      expect.objectContaining({
+        open: true,
+        product: productDetails,
+        isPending: false,
+        error: null,
+      }),
+    );
+  });
+
+  it("closes the edit product dialog", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Close edit dialog",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Edit product dialog",
+      }),
+    ).not.toBeInTheDocument();
+
+    expect(resetUpdateMutationMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("submits product changes through the update mutation", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Submit product update",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(mutateUpdateAsyncMock).toHaveBeenCalledWith(updateRequest);
+    });
+  });
+
+  it("disables product actions while an update is pending", () => {
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureUpdateMutation({
+      isPending: true,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    ).toBeDisabled();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Deactivate product",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("disables editing while a status action is pending", () => {
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureStatusAction({
+      isPending: true,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("passes the update error to the edit dialog", async () => {
+    const user = userEvent.setup();
+
+    const updateError = new ApiError(
+      400,
+      "UPDATE_PRODUCT_NAME_INVALID",
+      "The product name is invalid.",
+      "validation-trace-id",
+    );
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureUpdateMutation({
+      error: updateError,
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    );
+
+    const dialogProperties = editProductDetailsDialogMock.mock.calls.at(-1)[0];
+
+    expect(dialogProperties.error).toBe(updateError);
+  });
+
+  it("reloads product details after an update conflict", async () => {
+    const user = userEvent.setup();
+
+    configureProductQuery({
+      data: productDetails,
+    });
+
+    configureUpdateMutation({
+      error: new ApiError(
+        409,
+        "UPDATE_PRODUCT_CONCURRENCY_CONFLICT",
+        "The product was modified by another user.",
+        "conflict-trace-id",
+      ),
+    });
+
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Edit product",
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Reload edited product",
+      }),
+    );
+
+    expect(refetchMock).toHaveBeenCalledOnce();
+
+    expect(
+      screen.queryByRole("dialog", {
+        name: "Edit product dialog",
       }),
     ).not.toBeInTheDocument();
   });
