@@ -1,6 +1,17 @@
-/** @typedef {import('@mui/material/Select').SelectChangeEvent} SelectChangeEvent */
+/**
+ * @typedef {import("@mui/material/Select").SelectChangeEvent}
+ * SelectChangeEvent
+ */
 
-/** @typedef {import('../api/productListTypes.js').ProductStatus} ProductStatus */
+/**
+ * @typedef {import("../api/productListTypes.js").ProductStatus}
+ * ProductStatus
+ */
+
+/**
+ * @typedef {import("../api/createProductTypes.js").CreateProductRequest}
+ * CreateProductRequest
+ */
 
 import { useState } from "react";
 import {
@@ -29,29 +40,88 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
+import { CreateProductDialog } from "../components/CreateProductDialog";
+import { useCreateProduct } from "../hooks/useCreateProduct";
 import { useProducts } from "../hooks/useProducts";
+
 export function ProductListPage() {
   const [searchInput, setSearchInput] = useState("");
+
   const [appliedSearch, setAppliedSearch] = useState("");
+
   const [status, setStatus] = useState("");
+
   const [pageNumber, setPageNumber] = useState(1);
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
   const pageSize = 20;
+
   const productsQuery = useProducts({
     search: appliedSearch,
     status: status || undefined,
     pageNumber,
     pageSize,
   });
+
+  const createMutation = useCreateProduct();
+
   function handleStatusChange(event) {
     setStatus(event.target.value);
     setPageNumber(1);
   }
+
+  function handleOpenCreateDialog() {
+    createMutation.reset();
+    setCreateDialogOpen(true);
+  }
+
+  function handleCloseCreateDialog() {
+    if (createMutation.isPending) {
+      return;
+    }
+
+    createMutation.reset();
+    setCreateDialogOpen(false);
+  }
+
+  /**
+   * @param {CreateProductRequest} request
+   */
+  async function handleCreateProduct(request) {
+    return createMutation.mutateAsync(request);
+  }
+
   return (
     <Box component="main" sx={{ p: 4 }}>
       <Stack spacing={3}>
-        <Typography component="h1" variant="h4">
-          Products
-        </Typography>
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          spacing={2}
+          sx={{
+            alignItems: {
+              xs: "stretch",
+              sm: "center",
+            },
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography component="h1" variant="h4">
+            Products
+          </Typography>
+
+          <Button
+            type="button"
+            variant="contained"
+            disabled={createMutation.isPending}
+            onClick={handleOpenCreateDialog}
+          >
+            Create product
+          </Button>
+        </Stack>
 
         <Stack
           component="form"
@@ -62,7 +132,9 @@ export function ProductListPage() {
           spacing={2}
           onSubmit={(event) => {
             event.preventDefault();
+
             setAppliedSearch(searchInput.trim());
+
             setPageNumber(1);
           }}
         >
@@ -83,7 +155,9 @@ export function ProductListPage() {
               onChange={handleStatusChange}
             >
               <MenuItem value="">All statuses</MenuItem>
+
               <MenuItem value="Active">Active</MenuItem>
+
               <MenuItem value="Inactive">Inactive</MenuItem>
             </Select>
           </FormControl>
@@ -100,6 +174,7 @@ export function ProductListPage() {
         {productsQuery.isPending && (
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <CircularProgress size={24} />
+
             <Typography>Loading products...</Typography>
           </Stack>
         )}
@@ -139,9 +214,13 @@ export function ProductListPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell>SKU</TableCell>
+
                     <TableCell>Name</TableCell>
+
                     <TableCell>Status</TableCell>
+
                     <TableCell>Created at</TableCell>
+
                     <TableCell>Last modified at</TableCell>
                   </TableRow>
                 </TableHead>
@@ -183,7 +262,12 @@ export function ProductListPage() {
             </TableContainer>
 
             {productsQuery.data.totalPages > 0 && (
-              <Stack direction="row" sx={{ justifyContent: "center" }}>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "center",
+                }}
+              >
                 <Pagination
                   page={pageNumber}
                   count={productsQuery.data.totalPages}
@@ -198,22 +282,35 @@ export function ProductListPage() {
           </Stack>
         )}
       </Stack>
+
+      <CreateProductDialog
+        open={createDialogOpen}
+        isPending={createMutation.isPending}
+        error={createMutation.error}
+        onClose={handleCloseCreateDialog}
+        onSubmit={handleCreateProduct}
+      />
     </Box>
   );
 }
+
 function createProductDetailsPath(productId) {
   return `/products/${encodeURIComponent(productId)}`;
 }
+
 function getErrorMessage(error) {
   if (error instanceof ApiError) {
     return error.detail;
   }
+
   return "Unable to load products.";
 }
+
 function formatDate(value) {
   if (value === null) {
     return "—";
   }
+
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
