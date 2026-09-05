@@ -15,6 +15,7 @@ const useProductMock = vi.hoisted(() => vi.fn());
 
 const useProductStatusActionMock = vi.hoisted(() => vi.fn());
 const useUpdateProductDetailsMock = vi.hoisted(() => vi.fn());
+const useProductReferenceDataMock = vi.hoisted(() => vi.fn());
 const editProductDetailsDialogMock = vi.hoisted(() => vi.fn());
 
 const updateRequest = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ const mutateMock = vi.hoisted(() => vi.fn());
 const resetMutationMock = vi.hoisted(() => vi.fn());
 const mutateUpdateAsyncMock = vi.hoisted(() => vi.fn());
 const resetUpdateMutationMock = vi.hoisted(() => vi.fn());
+const referenceDataRefetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProduct", () => ({
   useProduct: useProductMock,
@@ -41,6 +43,10 @@ vi.mock("../hooks/useProductStatusAction", () => ({
 
 vi.mock("../hooks/useUpdateProductDetails", () => ({
   useUpdateProductDetails: useUpdateProductDetailsMock,
+}));
+
+vi.mock("../hooks/useProductReferenceData", () => ({
+  useProductReferenceData: useProductReferenceDataMock,
 }));
 
 vi.mock("../components/EditProductDetailsDialog", () => ({
@@ -102,6 +108,24 @@ const productDetails = {
   rowVersion: "AAAAAAAAB9E=",
 };
 
+const productReferenceData = {
+  unitsOfMeasure: [],
+  productCategories: [
+    {
+      id: "77777777-7777-7777-7777-777777777777",
+      code: "OFFICE",
+      name: "Office products",
+    },
+  ],
+  taxCategories: [
+    {
+      id: "55555555-5555-5555-5555-555555555555",
+      code: "GST15",
+      name: "Standard GST",
+    },
+  ],
+};
+
 function configureProductQuery(values = {}) {
   useProductMock.mockReturnValue({
     data: values.data,
@@ -129,6 +153,16 @@ function configureUpdateMutation(values = {}) {
     reset: resetUpdateMutationMock,
     error: values.error ?? null,
     isPending: values.isPending ?? false,
+  });
+}
+
+function configureReferenceDataQuery(values = {}) {
+  useProductReferenceDataMock.mockReturnValue({
+    data: values.data ?? productReferenceData,
+    error: values.error ?? null,
+    isPending: values.isPending ?? false,
+    isError: values.isError ?? false,
+    refetch: referenceDataRefetchMock,
   });
 }
 
@@ -168,15 +202,18 @@ describe("ProductDetailsPage", () => {
     useProductMock.mockReset();
     useProductStatusActionMock.mockReset();
     useUpdateProductDetailsMock.mockReset();
+    useProductReferenceDataMock.mockReset();
     editProductDetailsDialogMock.mockReset();
     refetchMock.mockReset();
     mutateMock.mockReset();
     resetMutationMock.mockReset();
     mutateUpdateAsyncMock.mockReset();
     resetUpdateMutationMock.mockReset();
+    referenceDataRefetchMock.mockReset();
 
     configureStatusAction();
     configureUpdateMutation();
+    configureReferenceDataQuery();
     mutateUpdateAsyncMock.mockResolvedValue(undefined);
   });
 

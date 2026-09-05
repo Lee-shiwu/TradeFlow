@@ -10,14 +10,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../shared/api/ApiError";
 import { EditProductDetailsDialog } from "./EditProductDetailsDialog";
 
+const productCategoryId = "77777777-7777-7777-7777-777777777777";
+const otherProductCategoryId = "88888888-8888-8888-8888-888888888888";
+const taxCategoryId = "55555555-5555-5555-5555-555555555555";
+const otherTaxCategoryId = "99999999-9999-9999-9999-999999999999";
+
 const product = {
   productId: "33333333-3333-3333-3333-333333333333",
   sku: "CHAIR-001",
   name: "Office Chair",
   description: "Ergonomic office chair.",
   unitOfMeasureId: "44444444-4444-4444-4444-444444444444",
-  productCategoryId: "77777777-7777-7777-7777-777777777777",
-  taxCategoryId: "55555555-5555-5555-5555-555555555555",
+  productCategoryId,
+  taxCategoryId,
   status: "Active",
   createdAt: "2026-08-27T00:00:00+00:00",
   createdBy: "66666666-6666-6666-6666-666666666666",
@@ -26,9 +31,22 @@ const product = {
   rowVersion: "AAAAAAAAB9E=",
 };
 
-const onCloseMock = vi.fn();
-const onSubmitMock = vi.fn();
-const onReloadMock = vi.fn();
+const referenceData = {
+  unitsOfMeasure: [],
+  productCategories: [
+    { id: productCategoryId, code: "OFFICE", name: "Office products" },
+    { id: otherProductCategoryId, code: "FURN", name: "Furniture" },
+  ],
+  taxCategories: [
+    { id: taxCategoryId, code: "GST15", name: "Standard GST" },
+    { id: otherTaxCategoryId, code: "ZERO", name: "Zero rated" },
+  ],
+};
+
+const onClose = vi.fn();
+const onSubmit = vi.fn();
+const onReload = vi.fn();
+const onRetryReferenceData = vi.fn();
 
 function renderDialog(properties = {}) {
   return render(
@@ -37,394 +55,212 @@ function renderDialog(properties = {}) {
       product={product}
       isPending={false}
       error={null}
-      onClose={onCloseMock}
-      onSubmit={onSubmitMock}
-      onReload={onReloadMock}
+      referenceData={referenceData}
+      isReferenceDataPending={false}
+      referenceDataError={null}
+      onClose={onClose}
+      onSubmit={onSubmit}
+      onReload={onReload}
+      onRetryReferenceData={onRetryReferenceData}
       {...properties}
     />,
   );
 }
 
-function getNameInput() {
-  return screen.getByLabelText(/Product name/);
+function field(label) {
+  return screen.getByLabelText(label);
 }
 
-function getDescriptionInput() {
-  return screen.getByLabelText("Description");
+async function choose(user, label, optionName) {
+  await user.click(field(label));
+  await user.click(await screen.findByRole("option", { name: optionName }));
 }
 
-function getProductCategoryInput() {
-  return screen.getByLabelText("Product category ID");
-}
-
-function getTaxCategoryInput() {
-  return screen.getByLabelText(/Tax category ID/);
+async function save(user) {
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
 }
 
 describe("EditProductDetailsDialog", () => {
   beforeEach(() => {
-    onCloseMock.mockReset();
-    onSubmitMock.mockReset();
-    onReloadMock.mockReset();
-
-    onSubmitMock.mockResolvedValue(undefined);
+    onClose.mockReset();
+    onSubmit.mockReset();
+    onReload.mockReset();
+    onRetryReferenceData.mockReset();
+    onSubmit.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    cleanup();
-  });
+  afterEach(cleanup);
 
-  it("shows the current product values", () => {
+  it("shows current values as business-friendly selections", () => {
     renderDialog();
 
-    expect(getNameInput()).toHaveValue("Office Chair");
-
-    expect(getDescriptionInput()).toHaveValue("Ergonomic office chair.");
-
-    expect(getProductCategoryInput()).toHaveValue(product.productCategoryId);
-
-    expect(getTaxCategoryInput()).toHaveValue(product.taxCategoryId);
+    expect(field(/Product name/)).toHaveValue("Office Chair");
+    expect(field("Description")).toHaveValue("Ergonomic office chair.");
+    expect(field("Product category")).toHaveTextContent(
+      "OFFICE — Office products",
+    );
+    expect(field(/Tax category/)).toHaveTextContent("GST15 — Standard GST");
   });
 
   it("requires a product name", async () => {
     const user = userEvent.setup();
-
     renderDialog();
-
-    const nameInput = getNameInput();
-
-    await user.clear(nameInput);
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
+    await user.clear(field(/Product name/));
+    await save(user);
 
     expect(
       await screen.findByText("Product name is required."),
     ).toBeInTheDocument();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("limits the product name to 100 characters", async () => {
+  it("validates text lengths", async () => {
     renderDialog();
-
-    fireEvent.change(getNameInput(), {
-      target: {
-        value: "A".repeat(101),
-      },
+    fireEvent.change(field(/Product name/), {
+      target: { value: "N".repeat(101) },
     });
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
+    fireEvent.change(field("Description"), {
+      target: { value: "D".repeat(1001) },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(
       await screen.findByText("Product name must not exceed 100 characters."),
     ).toBeInTheDocument();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
-  });
-
-  it("limits the description to 1000 characters", async () => {
-    renderDialog();
-
-    fireEvent.change(getDescriptionInput(), {
-      target: {
-        value: "A".repeat(1001),
-      },
-    });
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
     expect(
-      await screen.findByText("Description must not exceed 1000 characters."),
+      screen.getByText("Description must not exceed 1000 characters."),
     ).toBeInTheDocument();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
   });
 
-  it("rejects an invalid product category ID", async () => {
+  it("clears the optional product category", async () => {
     const user = userEvent.setup();
-
     renderDialog();
+    await choose(user, "Product category", "No product category");
+    await save(user);
 
-    const productCategoryInput = getProductCategoryInput();
-
-    await user.clear(productCategoryInput);
-
-    await user.type(productCategoryInput, "invalid-category-id");
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    expect(
-      await screen.findByText(
-        "Product category ID must be a valid non-empty GUID.",
-      ),
-    ).toBeInTheDocument();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
-  });
-
-  it("requires a valid tax category ID", async () => {
-    const user = userEvent.setup();
-
-    renderDialog();
-
-    const taxCategoryInput = getTaxCategoryInput();
-
-    await user.clear(taxCategoryInput);
-
-    await user.type(taxCategoryInput, "invalid-tax-category-id");
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    expect(
-      await screen.findByText(
-        "Tax category ID must be a valid non-empty GUID.",
-      ),
-    ).toBeInTheDocument();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
-  });
-
-  it("allows the optional product category to be cleared", async () => {
-    const user = userEvent.setup();
-
-    renderDialog();
-
-    await user.clear(getProductCategoryInput());
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    await waitFor(() => {
-      expect(onSubmitMock).toHaveBeenCalledOnce();
-    });
-
-    expect(onSubmitMock).toHaveBeenCalledWith({
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit).toHaveBeenCalledWith({
       name: product.name,
       description: product.description,
       productCategoryId: null,
-      taxCategoryId: product.taxCategoryId,
+      taxCategoryId,
       rowVersion: product.rowVersion,
     });
   });
 
-  it("submits the edited values and rowVersion", async () => {
+  it("submits edited values and selected reference IDs", async () => {
     const user = userEvent.setup();
-
     renderDialog();
+    await user.clear(field(/Product name/));
+    await user.type(field(/Product name/), "Updated Office Chair");
+    await user.clear(field("Description"));
+    await user.type(field("Description"), "Updated chair description.");
+    await choose(user, "Product category", "FURN — Furniture");
+    await choose(user, /Tax category/, "ZERO — Zero rated");
+    await save(user);
 
-    const nameInput = getNameInput();
-
-    const descriptionInput = getDescriptionInput();
-
-    await user.clear(nameInput);
-    await user.type(nameInput, "Updated Office Chair");
-
-    await user.clear(descriptionInput);
-    await user.type(descriptionInput, "Updated chair description.");
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    await waitFor(() => {
-      expect(onSubmitMock).toHaveBeenCalledOnce();
-    });
-
-    expect(onSubmitMock).toHaveBeenCalledWith({
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit).toHaveBeenCalledWith({
       name: "Updated Office Chair",
       description: "Updated chair description.",
-      productCategoryId: product.productCategoryId,
-      taxCategoryId: product.taxCategoryId,
+      productCategoryId: otherProductCategoryId,
+      taxCategoryId: otherTaxCategoryId,
       rowVersion: product.rowVersion,
     });
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("sends an empty description as null", async () => {
     const user = userEvent.setup();
-
     renderDialog();
+    await user.clear(field("Description"));
+    await save(user);
 
-    await user.clear(getDescriptionInput());
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    await waitFor(() => {
-      expect(onSubmitMock).toHaveBeenCalledOnce();
-    });
-
-    expect(onSubmitMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        description: null,
-      }),
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ description: null }),
     );
   });
 
-  it("closes without submitting when cancelled", async () => {
+  it("keeps a currently assigned inactive category visible", async () => {
     const user = userEvent.setup();
-
-    renderDialog();
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Cancel",
-      }),
-    );
-
-    expect(onCloseMock).toHaveBeenCalledOnce();
-
-    expect(onSubmitMock).not.toHaveBeenCalled();
-  });
-
-  it("closes after the update succeeds", async () => {
-    const user = userEvent.setup();
-
-    renderDialog();
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    await waitFor(() => {
-      expect(onCloseMock).toHaveBeenCalledOnce();
-    });
-  });
-
-  it("does not close when the update fails", async () => {
-    const user = userEvent.setup();
-
-    onSubmitMock.mockRejectedValue(
-      new ApiError(
-        409,
-        "UPDATE_PRODUCT_CONCURRENCY_CONFLICT",
-        "The product was modified by another user.",
-      ),
-    );
-
-    renderDialog();
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Save changes",
-      }),
-    );
-
-    await waitFor(() => {
-      expect(onSubmitMock).toHaveBeenCalledOnce();
-    });
-
-    expect(onCloseMock).not.toHaveBeenCalled();
-  });
-
-  it("disables the form while saving", () => {
     renderDialog({
-      isPending: true,
+      referenceData: { ...referenceData, productCategories: [] },
     });
-
-    expect(getNameInput()).toBeDisabled();
-
-    expect(getDescriptionInput()).toBeDisabled();
-
-    expect(getProductCategoryInput()).toBeDisabled();
-
-    expect(getTaxCategoryInput()).toBeDisabled();
+    await user.click(field("Product category"));
 
     expect(
-      screen.getByRole("button", {
-        name: "Cancel",
-      }),
-    ).toBeDisabled();
-
-    expect(
-      screen.getByRole("button", {
-        name: "Saving...",
-      }),
-    ).toBeDisabled();
+      screen.getByRole("option", { name: "Current selection is unavailable" }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("shows an API error", () => {
-    renderDialog({
-      error: new ApiError(
-        400,
-        "UPDATE_PRODUCT_NAME_INVALID",
-        "The product name is invalid.",
-        "validation-trace-id",
-      ),
-    });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "The product name is invalid.",
-    );
-  });
-
-  it("shows a concurrency error and reloads the product", async () => {
+  it("keeps the dialog open when saving fails", async () => {
     const user = userEvent.setup();
+    onSubmit.mockRejectedValue(
+      new ApiError(409, "UPDATE_PRODUCT_CONFLICT", "Product changed."),
+    );
+    renderDialog();
+    await save(user);
 
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("shows a concurrency message and reload action", async () => {
+    const user = userEvent.setup();
     renderDialog({
-      error: new ApiError(
-        409,
-        "UPDATE_PRODUCT_CONCURRENCY_CONFLICT",
-        "The product was modified by another user.",
-        "concurrency-trace-id",
-      ),
+      error: new ApiError(409, "UPDATE_PRODUCT_CONFLICT", "Product changed."),
     });
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "The product was modified by another user.",
     );
-
-    await user.click(
-      screen.getByRole("button", {
-        name: "Reload product",
-      }),
-    );
-
-    expect(onReloadMock).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: "Reload product" }));
+    expect(onReload).toHaveBeenCalledOnce();
   });
 
-  it("does not show reload for a normal API error", () => {
+  it("shows reference-data loading and disables submission", () => {
+    renderDialog({ isReferenceDataPending: true });
+
+    expect(screen.getByText("Loading product options...")).toBeInTheDocument();
+    expect(field(/Product name/)).toBeDisabled();
+    expect(field("Product category")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("shows a reference-data error and retries", async () => {
+    const user = userEvent.setup();
     renderDialog({
-      error: new ApiError(
+      referenceDataError: new ApiError(
         500,
-        "UNEXPECTED_ERROR",
-        "Unable to contact the product service.",
+        "REFERENCE_ERROR",
+        "Unable to retrieve product options.",
       ),
     });
 
-    expect(
-      screen.queryByRole("button", {
-        name: "Reload product",
-      }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Unable to retrieve product options.",
+    );
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetryReferenceData).toHaveBeenCalledOnce();
+  });
+
+  it("disables all actions while saving", () => {
+    renderDialog({ isPending: true });
+
+    expect(field(/Product name/)).toBeDisabled();
+    expect(field("Product category")).toHaveAttribute("aria-disabled", "true");
+    expect(field(/Tax category/)).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+  });
+
+  it("cancels without submitting", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

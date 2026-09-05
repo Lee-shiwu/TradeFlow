@@ -7,6 +7,7 @@ using TradeFlow.Modules.Catalog.Application.Products.ActivateProduct;
 using TradeFlow.Modules.Catalog.Application.Products.GetProductById;
 using TradeFlow.Modules.Catalog.Application.Products.ListProducts;
 using TradeFlow.Modules.Catalog.Application.Products.UpdateProductDetails;
+using TradeFlow.Modules.Catalog.Application.Products.GetProductReferenceData;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 
 namespace TradeFlow.Modules.Catalog;
@@ -41,6 +42,7 @@ public static class CatalogModule
         services.AddScoped<UpdateProductDetailsHandler>();
         services.AddScoped<DeactivateProductHandler>();
         services.AddScoped<ActivateProductHandler>();
+        services.AddScoped<GetProductReferenceDataHandler>();
 
         return services;
     }

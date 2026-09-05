@@ -13,6 +13,7 @@ import { ProductListPage } from "./ProductListPage";
 const useProductsMock = vi.hoisted(() => vi.fn());
 
 const useCreateProductMock = vi.hoisted(() => vi.fn());
+const useProductReferenceDataMock = vi.hoisted(() => vi.fn());
 
 const createProductDialogMock = vi.hoisted(() => vi.fn());
 
@@ -21,6 +22,7 @@ const refetchMock = vi.hoisted(() => vi.fn());
 const createMutateAsyncMock = vi.hoisted(() => vi.fn());
 
 const createResetMock = vi.hoisted(() => vi.fn());
+const referenceDataRefetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProducts", () => ({
   useProducts: useProductsMock,
@@ -28,6 +30,10 @@ vi.mock("../hooks/useProducts", () => ({
 
 vi.mock("../hooks/useCreateProduct", () => ({
   useCreateProduct: useCreateProductMock,
+}));
+
+vi.mock("../hooks/useProductReferenceData", () => ({
+  useProductReferenceData: useProductReferenceDataMock,
 }));
 
 vi.mock("../components/CreateProductDialog", () => ({
@@ -81,6 +87,30 @@ const createProductResponse = {
   sku: "CHAIR-002",
 };
 
+const productReferenceData = {
+  unitsOfMeasure: [
+    {
+      id: "44444444-4444-4444-4444-444444444444",
+      code: "EA",
+      name: "Each",
+    },
+  ],
+  productCategories: [
+    {
+      id: "77777777-7777-7777-7777-777777777777",
+      code: "OFFICE",
+      name: "Office products",
+    },
+  ],
+  taxCategories: [
+    {
+      id: "55555555-5555-5555-5555-555555555555",
+      code: "GST15",
+      name: "Standard GST",
+    },
+  ],
+};
+
 const productListResponse = {
   items: [
     {
@@ -132,6 +162,16 @@ function configureCreateMutation(values = {}) {
   });
 }
 
+function configureReferenceDataQuery(values = {}) {
+  useProductReferenceDataMock.mockReturnValue({
+    data: values.data ?? productReferenceData,
+    error: values.error ?? null,
+    isPending: values.isPending ?? false,
+    isError: values.isError ?? false,
+    refetch: referenceDataRefetchMock,
+  });
+}
+
 function ProductDetailsRouteStub() {
   const { productId: routeProductId } = useParams();
 
@@ -157,14 +197,17 @@ describe("ProductListPage", () => {
   beforeEach(() => {
     useProductsMock.mockReset();
     useCreateProductMock.mockReset();
+    useProductReferenceDataMock.mockReset();
     createProductDialogMock.mockReset();
     refetchMock.mockReset();
     createMutateAsyncMock.mockReset();
     createResetMock.mockReset();
+    referenceDataRefetchMock.mockReset();
 
     createMutateAsyncMock.mockResolvedValue(createProductResponse);
 
     configureCreateMutation();
+    configureReferenceDataQuery();
   });
 
   afterEach(() => {

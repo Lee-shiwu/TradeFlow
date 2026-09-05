@@ -9,13 +9,22 @@
  */
 
 /**
+ * @typedef {import("../api/productReferenceDataTypes.js").ProductReferenceData}
+ * ProductReferenceData
+ */
+
+/**
  * @typedef {Object} CreateProductDialogProps
  * @property {boolean} open
  * @property {boolean} isPending
  * @property {unknown} error
+ * @property {ProductReferenceData} referenceData
+ * @property {boolean} isReferenceDataPending
+ * @property {unknown} referenceDataError
  * @property {() => void} onClose
  * @property {(request: CreateProductRequest) =>
  * Promise<CreateProductResponse>} onSubmit
+ * @property {() => void} onRetryReferenceData
  */
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,15 +32,18 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ApiError } from "../../../shared/api/ApiError";
 
@@ -53,47 +65,32 @@ const createProductSchema = z.object({
       (value) => skuPattern.test(value),
       "Product SKU can only contain letters, numbers, and hyphens.",
     ),
-
   name: z
     .string()
     .trim()
     .min(1, "Product name is required.")
     .max(100, "Product name must not exceed 100 characters."),
-
   description: z
     .string()
     .trim()
     .max(1000, "Description must not exceed 1000 characters."),
-
-  unitOfMeasureId: z
-    .string()
-    .trim()
-    .min(1, "Unit of measure ID is required.")
-    .refine(
-      (value) =>
-        value === "" || (guidPattern.test(value) && value !== emptyGuid),
-      "Unit of measure ID must be a valid non-empty GUID.",
-    ),
-
+  unitOfMeasureId: requiredGuid(
+    "Unit of measure is required.",
+    "Unit of measure must be selected.",
+  ),
   productCategoryId: z
     .string()
     .trim()
     .refine(
       (value) =>
         value === "" || (guidPattern.test(value) && value !== emptyGuid),
-      "Product category ID must be a valid non-empty GUID.",
+      "Product category must be selected.",
     )
     .transform((value) => (value === "" ? null : value)),
-
-  taxCategoryId: z
-    .string()
-    .trim()
-    .min(1, "Tax category ID is required.")
-    .refine(
-      (value) =>
-        value === "" || (guidPattern.test(value) && value !== emptyGuid),
-      "Tax category ID must be a valid non-empty GUID.",
-    ),
+  taxCategoryId: requiredGuid(
+    "Tax category is required.",
+    "Tax category must be selected.",
+  ),
 });
 
 const emptyFormValues = {
@@ -105,6 +102,12 @@ const emptyFormValues = {
   taxCategoryId: "",
 };
 
+const emptyReferenceData = {
+  unitsOfMeasure: [],
+  productCategories: [],
+  taxCategories: [],
+};
+
 /**
  * 创建商品的表单对话框。
  *
@@ -114,11 +117,16 @@ export function CreateProductDialog({
   open,
   isPending,
   error,
+  referenceData = emptyReferenceData,
+  isReferenceDataPending = false,
+  referenceDataError = null,
   onClose,
   onSubmit,
+  onRetryReferenceData = () => {},
 }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -145,24 +153,20 @@ export function CreateProductDialog({
 
     try {
       const createdProduct = await onSubmit(request);
-
       onClose();
-
       return createdProduct;
     } catch {
-      // Mutation Hook 保存错误状态。
-      // 对话框继续打开并通过 error 属性显示错误。
       return undefined;
     }
   }
 
   function handleDialogClose() {
-    if (isPending) {
-      return;
+    if (!isPending) {
+      onClose();
     }
-
-    onClose();
   }
+
+  const formDisabled = isPending || isReferenceDataPending;
 
   return (
     <Dialog
@@ -183,12 +187,36 @@ export function CreateProductDialog({
 
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            {isReferenceDataPending && (
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                <CircularProgress size={20} />
+                <Typography>Loading product options...</Typography>
+              </Stack>
+            )}
+
+            {referenceDataError && (
+              <Alert
+                severity="error"
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={onRetryReferenceData}
+                  >
+                    Retry
+                  </Button>
+                }
+              >
+                {getReferenceDataErrorMessage(referenceDataError)}
+              </Alert>
+            )}
+
             <TextField
               label="Product SKU"
               required
               fullWidth
               autoFocus
-              disabled={isPending}
+              disabled={formDisabled}
               error={Boolean(errors.sku)}
               helperText={
                 errors.sku?.message ?? "Letters, numbers, and hyphens only."
@@ -200,7 +228,7 @@ export function CreateProductDialog({
               label="Product name"
               required
               fullWidth
-              disabled={isPending}
+              disabled={formDisabled}
               error={Boolean(errors.name)}
               helperText={errors.name?.message}
               {...register("name")}
@@ -211,39 +239,40 @@ export function CreateProductDialog({
               fullWidth
               multiline
               minRows={3}
-              disabled={isPending}
+              disabled={formDisabled}
               error={Boolean(errors.description)}
               helperText={errors.description?.message}
               {...register("description")}
             />
 
-            <TextField
-              label="Unit of measure ID"
+            <ReferenceDataSelect
+              name="unitOfMeasureId"
+              label="Unit of measure"
               required
-              fullWidth
-              disabled={isPending}
-              error={Boolean(errors.unitOfMeasureId)}
-              helperText={errors.unitOfMeasureId?.message}
-              {...register("unitOfMeasureId")}
+              control={control}
+              items={referenceData.unitsOfMeasure}
+              disabled={formDisabled}
+              error={errors.unitOfMeasureId}
             />
 
-            <TextField
-              label="Product category ID"
-              fullWidth
-              disabled={isPending}
-              error={Boolean(errors.productCategoryId)}
-              helperText={errors.productCategoryId?.message ?? "Optional."}
-              {...register("productCategoryId")}
+            <ReferenceDataSelect
+              name="productCategoryId"
+              label="Product category"
+              control={control}
+              items={referenceData.productCategories}
+              disabled={formDisabled}
+              error={errors.productCategoryId}
+              emptyOptionLabel="No product category"
             />
 
-            <TextField
-              label="Tax category ID"
+            <ReferenceDataSelect
+              name="taxCategoryId"
+              label="Tax category"
               required
-              fullWidth
-              disabled={isPending}
-              error={Boolean(errors.taxCategoryId)}
-              helperText={errors.taxCategoryId?.message}
-              {...register("taxCategoryId")}
+              control={control}
+              items={referenceData.taxCategories}
+              disabled={formDisabled}
+              error={errors.taxCategoryId}
             />
 
             {error && (
@@ -261,7 +290,16 @@ export function CreateProductDialog({
             Cancel
           </Button>
 
-          <Button type="submit" variant="contained" disabled={isPending}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={
+              formDisabled ||
+              Boolean(referenceDataError) ||
+              referenceData.unitsOfMeasure.length === 0 ||
+              referenceData.taxCategories.length === 0
+            }
+          >
             {isPending ? "Creating..." : "Create product"}
           </Button>
         </DialogActions>
@@ -270,10 +308,72 @@ export function CreateProductDialog({
   );
 }
 
+function ReferenceDataSelect({
+  name,
+  label,
+  required = false,
+  control,
+  items,
+  disabled,
+  error,
+  emptyOptionLabel,
+}) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          select
+          label={label}
+          required={required}
+          fullWidth
+          disabled={disabled}
+          error={Boolean(error)}
+          helperText={error?.message}
+        >
+          {emptyOptionLabel && <MenuItem value="">{emptyOptionLabel}</MenuItem>}
+
+          {items.map((item) => (
+            <MenuItem key={item.id} value={item.id}>
+              {formatReferenceDataItem(item)}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    />
+  );
+}
+
+function requiredGuid(requiredMessage, invalidMessage) {
+  return z
+    .string()
+    .trim()
+    .min(1, requiredMessage)
+    .refine(
+      (value) =>
+        value === "" || (guidPattern.test(value) && value !== emptyGuid),
+      invalidMessage,
+    );
+}
+
 function getCreateErrorMessage(error) {
   if (error instanceof ApiError) {
     return error.detail;
   }
 
   return "Unable to create the product.";
+}
+
+function getReferenceDataErrorMessage(error) {
+  if (error instanceof ApiError) {
+    return error.detail;
+  }
+
+  return "Unable to load product options.";
+}
+
+function formatReferenceDataItem(item) {
+  return `${item.code} — ${item.name}`;
 }

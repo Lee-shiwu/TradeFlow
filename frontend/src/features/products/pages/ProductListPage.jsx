@@ -42,6 +42,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
 import { CreateProductDialog } from "../components/CreateProductDialog";
 import { useCreateProduct } from "../hooks/useCreateProduct";
+import { useProductReferenceData } from "../hooks/useProductReferenceData";
 import { useProducts } from "../hooks/useProducts";
 
 export function ProductListPage() {
@@ -65,6 +66,8 @@ export function ProductListPage() {
   });
 
   const createMutation = useCreateProduct();
+
+  const referenceDataQuery = useProductReferenceData(createDialogOpen);
 
   function handleStatusChange(event) {
     setStatus(event.target.value);
@@ -287,8 +290,20 @@ export function ProductListPage() {
         open={createDialogOpen}
         isPending={createMutation.isPending}
         error={createMutation.error}
+        referenceData={
+          referenceDataQuery.data ?? {
+            unitsOfMeasure: [],
+            productCategories: [],
+            taxCategories: [],
+          }
+        }
+        isReferenceDataPending={referenceDataQuery.isPending}
+        referenceDataError={referenceDataQuery.error}
         onClose={handleCloseCreateDialog}
         onSubmit={handleCreateProduct}
+        onRetryReferenceData={() => {
+          void referenceDataQuery.refetch();
+        }}
       />
     </Box>
   );

@@ -27,6 +27,7 @@ import { Link as RouterLink, useParams } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
 import { EditProductDetailsDialog } from "../components/EditProductDetailsDialog";
 import { useProduct } from "../hooks/useProduct";
+import { useProductReferenceData } from "../hooks/useProductReferenceData";
 import { useProductStatusAction } from "../hooks/useProductStatusAction";
 import { useUpdateProductDetails } from "../hooks/useUpdateProductDetails";
 
@@ -40,6 +41,8 @@ export function ProductDetailsPage() {
 
   const [pendingAction, setPendingAction] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const referenceDataQuery = useProductReferenceData(editDialogOpen);
 
   const product = productQuery.data;
 
@@ -380,9 +383,21 @@ export function ProductDetailsPage() {
           product={product}
           isPending={updateMutation.isPending}
           error={updateMutation.error}
+          referenceData={
+            referenceDataQuery.data ?? {
+              unitsOfMeasure: [],
+              productCategories: [],
+              taxCategories: [],
+            }
+          }
+          isReferenceDataPending={referenceDataQuery.isPending}
+          referenceDataError={referenceDataQuery.error}
           onClose={handleCloseEditDialog}
           onSubmit={handleUpdateProduct}
           onReload={handleReloadUpdatedProduct}
+          onRetryReferenceData={() => {
+            void referenceDataQuery.refetch();
+          }}
         />
       )}
     </Box>
