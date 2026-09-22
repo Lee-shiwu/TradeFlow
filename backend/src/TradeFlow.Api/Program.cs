@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TradeFlow.Api.Endpoints.Catalog.Products;
+using TradeFlow.Api.Endpoints.Catalog.ProductCategories;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
 using TradeFlow.BuildingBlocks.Time;
@@ -92,6 +93,7 @@ app.MapUpdateProductDetailsEndpoint();
 app.MapDeactivateProductEndpoint();
 app.MapActivateProductEndpoint();
 app.MapGetProductReferenceDataEndpoint();
+app.MapListProductCategoriesEndpoint();
 
 app.Run();
 
