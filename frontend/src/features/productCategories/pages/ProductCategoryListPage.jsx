@@ -22,6 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
 import { useProductCategories } from "../hooks/useProductCategories";
 
@@ -137,6 +138,7 @@ export function ProductCategoryListPage() {
                     <TableCell>Status</TableCell>
                     <TableCell>Created at</TableCell>
                     <TableCell>Last modified at</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -158,6 +160,15 @@ export function ProductCategoryListPage() {
                       <TableCell>{formatDate(category.createdAt)}</TableCell>
                       <TableCell>
                         {formatDate(category.lastModifiedAt)}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          component={RouterLink}
+                          to={`/product-categories/${category.productCategoryId}`}
+                          size="small"
+                        >
+                          View details
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

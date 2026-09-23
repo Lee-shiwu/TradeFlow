@@ -1,5 +1,6 @@
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+import { ProductCategoryDetailsPage } from "./features/productCategories/pages/ProductCategoryDetailsPage";
 import { ProductCategoryListPage } from "./features/productCategories/pages/ProductCategoryListPage";
 import { ProductDetailsPage } from "./features/products/pages/ProductDetailsPage";
 import { ProductListPage } from "./features/products/pages/ProductListPage";
@@ -58,6 +59,11 @@ export default function App() {
             <Route
               path="/product-categories"
               element={<ProductCategoryListPage />}
+            />
+
+            <Route
+              path="/product-categories/:productCategoryId"
+              element={<ProductCategoryDetailsPage />}
             />
 
             <Route

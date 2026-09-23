@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
 import { ProductCategoryListPage } from "./ProductCategoryListPage";
 
@@ -40,6 +41,23 @@ function configureQuery(values = {}) {
   });
 }
 
+function renderPage() {
+  render(
+    <MemoryRouter initialEntries={["/product-categories"]}>
+      <Routes>
+        <Route
+          path="/product-categories"
+          element={<ProductCategoryListPage />}
+        />
+        <Route
+          path="/product-categories/:productCategoryId"
+          element={<div>Product category details destination</div>}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe("ProductCategoryListPage", () => {
   beforeEach(() => {
     useProductCategoriesMock.mockReset();
@@ -50,7 +68,7 @@ describe("ProductCategoryListPage", () => {
 
   it("shows loading state", () => {
     configureQuery({ isPending: true, isFetching: true });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     expect(
       screen.getByText("Loading product categories..."),
@@ -59,7 +77,7 @@ describe("ProductCategoryListPage", () => {
 
   it("shows product categories", () => {
     configureQuery({ data: response });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     expect(screen.getByText("Total product categories: 1")).toBeInTheDocument();
     expect(screen.getByText("OFFICE")).toBeInTheDocument();
@@ -74,7 +92,7 @@ describe("ProductCategoryListPage", () => {
     configureQuery({
       data: { ...response, items: [], totalCount: 0, totalPages: 0 },
     });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     expect(
       screen.getByText("No product categories found."),
@@ -88,7 +106,7 @@ describe("ProductCategoryListPage", () => {
       error: new ApiError(500, "UNEXPECTED_ERROR", "Category service failed."),
       isError: true,
     });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     expect(screen.getByText("Category service failed.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Retry" }));
@@ -98,7 +116,7 @@ describe("ProductCategoryListPage", () => {
   it("applies trimmed search and resets to page one", async () => {
     const user = userEvent.setup();
     configureQuery({ data: response });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     await user.type(screen.getByLabelText("Search"), "  office  ");
     await user.click(screen.getByRole("button", { name: "Search" }));
@@ -116,7 +134,7 @@ describe("ProductCategoryListPage", () => {
   it("applies the selected status", async () => {
     const user = userEvent.setup();
     configureQuery({ data: response });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     await user.click(screen.getByLabelText("Status"));
     await user.click(screen.getByRole("option", { name: "Inactive" }));
@@ -134,7 +152,7 @@ describe("ProductCategoryListPage", () => {
   it("requests the selected page", async () => {
     const user = userEvent.setup();
     configureQuery({ data: { ...response, totalCount: 60, totalPages: 3 } });
-    render(<ProductCategoryListPage />);
+    renderPage();
 
     await user.click(screen.getByRole("button", { name: "Go to page 2" }));
 
@@ -146,5 +164,17 @@ describe("ProductCategoryListPage", () => {
         pageSize: 20,
       });
     });
+  });
+
+  it("opens the selected category details", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: response });
+    renderPage();
+
+    await user.click(screen.getByRole("link", { name: "View details" }));
+
+    expect(
+      screen.getByText("Product category details destination"),
+    ).toBeInTheDocument();
   });
 });

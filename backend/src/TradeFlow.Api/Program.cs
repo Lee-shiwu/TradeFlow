@@ -94,6 +94,7 @@ app.MapDeactivateProductEndpoint();
 app.MapActivateProductEndpoint();
 app.MapGetProductReferenceDataEndpoint();
 app.MapListProductCategoriesEndpoint();
+app.MapGetProductCategoryByIdEndpoint();
 
 app.Run();
 
