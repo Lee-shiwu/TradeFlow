@@ -8,6 +8,7 @@ using TradeFlow.Modules.Catalog.Application.Products.GetProductById;
 using TradeFlow.Modules.Catalog.Application.Products.ListProducts;
 using TradeFlow.Modules.Catalog.Application.Products.UpdateProductDetails;
 using TradeFlow.Modules.Catalog.Application.Products.GetProductReferenceData;
+using TradeFlow.Modules.Catalog.Application.ProductCategories.CreateProductCategory;
 using TradeFlow.Modules.Catalog.Application.ProductCategories.GetProductCategoryById;
 using TradeFlow.Modules.Catalog.Application.ProductCategories.ListProductCategories;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
@@ -45,6 +46,7 @@ public static class CatalogModule
         services.AddScoped<DeactivateProductHandler>();
         services.AddScoped<ActivateProductHandler>();
         services.AddScoped<GetProductReferenceDataHandler>();
+        services.AddScoped<CreateProductCategoryHandler>();
         services.AddScoped<GetProductCategoryByIdHandler>();
         services.AddScoped<ListProductCategoriesHandler>();
 

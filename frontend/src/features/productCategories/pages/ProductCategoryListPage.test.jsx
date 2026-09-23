@@ -6,10 +6,17 @@ import { ApiError } from "../../../shared/api/ApiError";
 import { ProductCategoryListPage } from "./ProductCategoryListPage";
 
 const useProductCategoriesMock = vi.hoisted(() => vi.fn());
+const useCreateProductCategoryMock = vi.hoisted(() => vi.fn());
 const refetchMock = vi.hoisted(() => vi.fn());
+const createMutateAsyncMock = vi.hoisted(() => vi.fn());
+const createResetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProductCategories", () => ({
   useProductCategories: useProductCategoriesMock,
+}));
+
+vi.mock("../hooks/useCreateProductCategory", () => ({
+  useCreateProductCategory: useCreateProductCategoryMock,
 }));
 
 const response = {
@@ -61,7 +68,17 @@ function renderPage() {
 describe("ProductCategoryListPage", () => {
   beforeEach(() => {
     useProductCategoriesMock.mockReset();
+    useCreateProductCategoryMock.mockReset();
     refetchMock.mockReset();
+    createMutateAsyncMock.mockReset();
+    createResetMock.mockReset();
+
+    useCreateProductCategoryMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: createMutateAsyncMock,
+      reset: createResetMock,
+    });
   });
 
   afterEach(cleanup);
@@ -176,5 +193,43 @@ describe("ProductCategoryListPage", () => {
     expect(
       screen.getByText("Product category details destination"),
     ).toBeInTheDocument();
+  });
+
+  it("creates a product category from the list page", async () => {
+    const user = userEvent.setup();
+    createMutateAsyncMock.mockResolvedValue({
+      productCategoryId: "88888888-8888-8888-8888-888888888888",
+      code: "FURNITURE",
+      name: "Furniture",
+      description: null,
+      status: "Active",
+      createdAt: "2026-09-23T08:30:00+00:00",
+      createdBy: "11111111-1111-1111-1111-111111111111",
+      lastModifiedAt: null,
+      lastModifiedBy: null,
+      rowVersion: "AAAAAAAAB9E=",
+    });
+    configureQuery({ data: response });
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", { name: "Create product category" }),
+    );
+    await user.type(screen.getByLabelText(/Category code/), "furniture");
+    await user.type(screen.getByLabelText(/Category name/), "Furniture");
+    await user.click(screen.getByRole("button", { name: "Create category" }));
+
+    await waitFor(() => {
+      expect(createMutateAsyncMock).toHaveBeenCalledWith({
+        code: "FURNITURE",
+        name: "Furniture",
+        description: null,
+      });
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Create product category" }),
+      ).toBeNull();
+    });
   });
 });
