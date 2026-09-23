@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -7,9 +7,16 @@ import { ProductCategoryDetailsPage } from "./ProductCategoryDetailsPage";
 
 const useProductCategoryMock = vi.hoisted(() => vi.fn());
 const refetchMock = vi.hoisted(() => vi.fn());
+const useUpdateProductCategoryDetailsMock = vi.hoisted(() => vi.fn());
+const mutateAsyncMock = vi.hoisted(() => vi.fn());
+const resetMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProductCategory", () => ({
   useProductCategory: useProductCategoryMock,
+}));
+
+vi.mock("../hooks/useUpdateProductCategoryDetails", () => ({
+  useUpdateProductCategoryDetails: useUpdateProductCategoryDetailsMock,
 }));
 
 const productCategoryId = "77777777-7777-7777-7777-777777777777";
@@ -63,6 +70,16 @@ describe("ProductCategoryDetailsPage", () => {
   beforeEach(() => {
     useProductCategoryMock.mockReset();
     refetchMock.mockReset();
+    useUpdateProductCategoryDetailsMock.mockReset();
+    mutateAsyncMock.mockReset();
+    resetMutationMock.mockReset();
+    mutateAsyncMock.mockResolvedValue(undefined);
+    useUpdateProductCategoryDetailsMock.mockReturnValue({
+      isPending: false,
+      error: null,
+      mutateAsync: mutateAsyncMock,
+      reset: resetMutationMock,
+    });
   });
 
   afterEach(cleanup);
@@ -143,5 +160,49 @@ describe("ProductCategoryDetailsPage", () => {
     expect(
       screen.getByText("Product category list destination"),
     ).toBeInTheDocument();
+  });
+
+  it("opens the editor and submits category details", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: details });
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Edit category" }));
+    await user.clear(screen.getByLabelText(/Category name/));
+    await user.type(screen.getByLabelText(/Category name/), "Updated category");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
+      name: "Updated category",
+      description: details.description,
+      rowVersion: details.rowVersion,
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Edit product category" }),
+      ).toBeNull();
+    });
+  });
+
+  it("reloads details after an edit conflict", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: details });
+    useUpdateProductCategoryDetailsMock.mockReturnValue({
+      isPending: false,
+      error: new ApiError(
+        409,
+        "UPDATE_PRODUCT_CATEGORY_CONCURRENCY_CONFLICT",
+        "Category changed.",
+      ),
+      mutateAsync: mutateAsyncMock,
+      reset: resetMutationMock,
+    });
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Edit category" }));
+    await user.click(screen.getByRole("button", { name: "Reload category" }));
+
+    expect(refetchMock).toHaveBeenCalledOnce();
+    expect(resetMutationMock).toHaveBeenCalled();
   });
 });

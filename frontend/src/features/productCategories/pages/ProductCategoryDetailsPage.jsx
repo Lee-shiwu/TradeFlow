@@ -17,13 +17,18 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
+import { EditProductCategoryDetailsDialog } from "../components/EditProductCategoryDetailsDialog";
 import { useProductCategory } from "../hooks/useProductCategory";
+import { useUpdateProductCategoryDetails } from "../hooks/useUpdateProductCategoryDetails";
 
 export function ProductCategoryDetailsPage() {
   const { productCategoryId } = useParams();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const categoryQuery = useProductCategory(productCategoryId);
+  const updateCategory = useUpdateProductCategoryDetails(productCategoryId);
   const category = categoryQuery.data;
 
   const isNotFound =
@@ -45,13 +50,27 @@ export function ProductCategoryDetailsPage() {
             Product category details
           </Typography>
 
-          <Button
-            component={RouterLink}
-            to="/product-categories"
-            variant="outlined"
-          >
-            Back to product categories
-          </Button>
+          <Stack direction="row" spacing={1}>
+            {category && (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  updateCategory.reset();
+                  setEditDialogOpen(true);
+                }}
+              >
+                Edit category
+              </Button>
+            )}
+
+            <Button
+              component={RouterLink}
+              to="/product-categories"
+              variant="outlined"
+            >
+              Back to product categories
+            </Button>
+          </Stack>
         </Stack>
 
         {!productCategoryId && (
@@ -159,6 +178,25 @@ export function ProductCategoryDetailsPage() {
               </Stack>
             </Stack>
           </Paper>
+        )}
+
+        {category && (
+          <EditProductCategoryDetailsDialog
+            open={editDialogOpen}
+            category={category}
+            isPending={updateCategory.isPending}
+            error={updateCategory.error}
+            onClose={() => {
+              setEditDialogOpen(false);
+              updateCategory.reset();
+            }}
+            onSubmit={(request) => updateCategory.mutateAsync(request)}
+            onReload={() => {
+              setEditDialogOpen(false);
+              updateCategory.reset();
+              void categoryQuery.refetch();
+            }}
+          />
         )}
       </Stack>
     </Box>
