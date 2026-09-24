@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TradeFlow.Api.Endpoints.Catalog.Products;
 using TradeFlow.Api.Endpoints.Catalog.ProductCategories;
+using TradeFlow.Api.Endpoints.Catalog.TaxCategories;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
 using TradeFlow.BuildingBlocks.Time;
@@ -99,6 +100,7 @@ app.MapCreateProductCategoryEndpoint();
 app.MapUpdateProductCategoryDetailsEndpoint();
 app.MapActivateProductCategoryEndpoint();
 app.MapDeactivateProductCategoryEndpoint();
+app.MapListTaxCategoriesEndpoint();
 
 app.Run();
 

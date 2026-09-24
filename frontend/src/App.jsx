@@ -5,6 +5,7 @@ import { ProductCategoryListPage } from "./features/productCategories/pages/Prod
 import { ProductDetailsPage } from "./features/products/pages/ProductDetailsPage";
 import { ProductListPage } from "./features/products/pages/ProductListPage";
 import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
+import { TaxCategoryListPage } from "./features/taxCategories/pages/TaxCategoryListPage";
 export default function App() {
   return (
     <Box
@@ -48,6 +49,10 @@ export default function App() {
               >
                 Product categories
               </Button>
+
+              <Button component={NavLink} to="/tax-categories" variant="text">
+                Tax categories
+              </Button>
             </Stack>
           </Box>
 
@@ -65,6 +70,8 @@ export default function App() {
               path="/product-categories/:productCategoryId"
               element={<ProductCategoryDetailsPage />}
             />
+
+            <Route path="/tax-categories" element={<TaxCategoryListPage />} />
 
             <Route
               path="/products/:productId"
