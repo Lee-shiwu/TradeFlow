@@ -6,6 +6,7 @@ import { ProductDetailsPage } from "./features/products/pages/ProductDetailsPage
 import { ProductListPage } from "./features/products/pages/ProductListPage";
 import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
 import { TaxCategoryListPage } from "./features/taxCategories/pages/TaxCategoryListPage";
+import { TaxCategoryDetailsPage } from "./features/taxCategories/pages/TaxCategoryDetailsPage";
 export default function App() {
   return (
     <Box
@@ -72,6 +73,11 @@ export default function App() {
             />
 
             <Route path="/tax-categories" element={<TaxCategoryListPage />} />
+
+            <Route
+              path="/tax-categories/:taxCategoryId"
+              element={<TaxCategoryDetailsPage />}
+            />
 
             <Route
               path="/products/:productId"

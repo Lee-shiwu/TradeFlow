@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import { ApiError } from "../../../shared/api/ApiError";
 import { useTaxCategories } from "../hooks/useTaxCategories";
+import { Link as RouterLink } from "react-router-dom";
 
 export function TaxCategoryListPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -142,6 +143,7 @@ export function TaxCategoryListPage() {
                       <TableCell>Status</TableCell>
                       <TableCell>Effective from</TableCell>
                       <TableCell>Effective to</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -169,6 +171,15 @@ export function TaxCategoryListPage() {
                         </TableCell>
                         <TableCell>
                           {formatDateOnly(category.effectiveTo)}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            component={RouterLink}
+                            to={`/tax-categories/${category.taxCategoryId}`}
+                            size="small"
+                          >
+                            View details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

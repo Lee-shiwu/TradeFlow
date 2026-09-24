@@ -15,6 +15,7 @@ using TradeFlow.Modules.Catalog.Application.ProductCategories.UpdateProductCateg
 using TradeFlow.Modules.Catalog.Application.ProductCategories.ActivateProductCategory;
 using TradeFlow.Modules.Catalog.Application.ProductCategories.DeactivateProductCategory;
 using TradeFlow.Modules.Catalog.Application.TaxCategories.ListTaxCategories;
+using TradeFlow.Modules.Catalog.Application.TaxCategories.GetTaxCategoryById;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 
 namespace TradeFlow.Modules.Catalog;
@@ -57,6 +58,7 @@ public static class CatalogModule
         services.AddScoped<ActivateProductCategoryHandler>();
         services.AddScoped<DeactivateProductCategoryHandler>();
         services.AddScoped<ListTaxCategoriesHandler>();
+        services.AddScoped<GetTaxCategoryByIdHandler>();
 
         return services;
     }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../shared/api/ApiError";
 import { TaxCategoryListPage } from "./TaxCategoryListPage";
+import { MemoryRouter } from "react-router-dom";
 
 const useTaxCategoriesMock = vi.hoisted(() => vi.fn());
 const refetchMock = vi.hoisted(() => vi.fn());
@@ -36,6 +37,14 @@ function configureQuery(values = {}) {
   });
 }
 
+function pageElement() {
+  return (
+    <MemoryRouter>
+      <TaxCategoryListPage />
+    </MemoryRouter>
+  );
+}
+
 describe("TaxCategoryListPage", () => {
   beforeEach(() => {
     useTaxCategoriesMock.mockReset();
@@ -46,7 +55,7 @@ describe("TaxCategoryListPage", () => {
 
   it("shows loading and empty states", () => {
     configureQuery({ isPending: true });
-    const { rerender } = render(<TaxCategoryListPage />);
+    const { rerender } = render(pageElement());
     expect(screen.getByText("Loading tax categories...")).toBeInTheDocument();
 
     configureQuery({
@@ -58,7 +67,7 @@ describe("TaxCategoryListPage", () => {
         totalPages: 0,
       },
     });
-    rerender(<TaxCategoryListPage />);
+    rerender(pageElement());
     expect(screen.getByText("No tax categories found.")).toBeInTheDocument();
   });
 
@@ -72,7 +81,7 @@ describe("TaxCategoryListPage", () => {
         totalPages: 1,
       },
     });
-    render(<TaxCategoryListPage />);
+    render(pageElement());
 
     expect(screen.getByText("GST15")).toBeInTheDocument();
     expect(screen.getByText("Standard GST")).toBeInTheDocument();
@@ -80,6 +89,10 @@ describe("TaxCategoryListPage", () => {
     expect(screen.getByText("15%")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
     expect(screen.getByText("No end date")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View details" })).toHaveAttribute(
+      "href",
+      `/tax-categories/${items[0].taxCategoryId}`,
+    );
   });
 
   it("applies search and status filters", async () => {
@@ -93,7 +106,7 @@ describe("TaxCategoryListPage", () => {
         totalPages: 1,
       },
     });
-    render(<TaxCategoryListPage />);
+    render(pageElement());
 
     await user.type(screen.getByLabelText("Search"), " gst ");
     await user.click(screen.getByLabelText("Status"));
@@ -119,7 +132,7 @@ describe("TaxCategoryListPage", () => {
         totalPages: 2,
       },
     });
-    const { rerender } = render(<TaxCategoryListPage />);
+    const { rerender } = render(pageElement());
     await user.click(screen.getByRole("button", { name: "Go to page 2" }));
     expect(useTaxCategoriesMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ pageNumber: 2 }),
@@ -135,7 +148,7 @@ describe("TaxCategoryListPage", () => {
       },
       isFetching: true,
     });
-    rerender(<TaxCategoryListPage />);
+    rerender(pageElement());
     expect(screen.getByRole("button", { name: "page 2" })).toBeDisabled();
   });
 
@@ -145,7 +158,7 @@ describe("TaxCategoryListPage", () => {
       error: new ApiError(500, "UNEXPECTED_ERROR", "Tax service failed."),
       isError: true,
     });
-    render(<TaxCategoryListPage />);
+    render(pageElement());
 
     expect(screen.getByText("Tax service failed.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Retry" }));
