@@ -97,6 +97,8 @@ app.MapListProductCategoriesEndpoint();
 app.MapGetProductCategoryByIdEndpoint();
 app.MapCreateProductCategoryEndpoint();
 app.MapUpdateProductCategoryDetailsEndpoint();
+app.MapActivateProductCategoryEndpoint();
+app.MapDeactivateProductCategoryEndpoint();
 
 app.Run();
 

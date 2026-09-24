@@ -12,6 +12,11 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   LinearProgress,
   Paper,
   Stack,
@@ -22,18 +27,68 @@ import { Link as RouterLink, useParams } from "react-router-dom";
 import { ApiError } from "../../../shared/api/ApiError";
 import { EditProductCategoryDetailsDialog } from "../components/EditProductCategoryDetailsDialog";
 import { useProductCategory } from "../hooks/useProductCategory";
+import { useProductCategoryStatusAction } from "../hooks/useProductCategoryStatusAction";
 import { useUpdateProductCategoryDetails } from "../hooks/useUpdateProductCategoryDetails";
 
 export function ProductCategoryDetailsPage() {
   const { productCategoryId } = useParams();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [pendingStatusAction, setPendingStatusAction] = useState(null);
   const categoryQuery = useProductCategory(productCategoryId);
   const updateCategory = useUpdateProductCategoryDetails(productCategoryId);
+  const statusAction = useProductCategoryStatusAction(productCategoryId);
   const category = categoryQuery.data;
 
   const isNotFound =
     categoryQuery.error instanceof ApiError &&
     categoryQuery.error.status === 404;
+
+  const isConcurrencyConflict =
+    statusAction.error instanceof ApiError && statusAction.error.status === 409;
+
+  const isActivateAction = pendingStatusAction === "activate";
+
+  function handleOpenStatusDialog() {
+    if (!category) {
+      return;
+    }
+
+    statusAction.reset();
+    setPendingStatusAction(
+      category.status === "Active" ? "deactivate" : "activate",
+    );
+  }
+
+  function handleCloseStatusDialog() {
+    if (statusAction.isPending) {
+      return;
+    }
+
+    statusAction.reset();
+    setPendingStatusAction(null);
+  }
+
+  function handleConfirmStatusAction() {
+    if (!category || !pendingStatusAction) {
+      return;
+    }
+
+    statusAction.mutate(
+      {
+        action: pendingStatusAction,
+        rowVersion: category.rowVersion,
+      },
+      {
+        onSuccess: () => setPendingStatusAction(null),
+      },
+    );
+  }
+
+  function handleReloadCategory() {
+    statusAction.reset();
+    setPendingStatusAction(null);
+    void categoryQuery.refetch();
+  }
 
   return (
     <Box component="main" sx={{ p: 4 }}>
@@ -52,15 +107,39 @@ export function ProductCategoryDetailsPage() {
 
           <Stack direction="row" spacing={1}>
             {category && (
-              <Button
-                variant="contained"
-                onClick={() => {
-                  updateCategory.reset();
-                  setEditDialogOpen(true);
-                }}
-              >
-                Edit category
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  disabled={
+                    statusAction.isPending ||
+                    updateCategory.isPending ||
+                    categoryQuery.isFetching
+                  }
+                  onClick={() => {
+                    updateCategory.reset();
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  Edit category
+                </Button>
+
+                <Button
+                  variant={
+                    category.status === "Active" ? "outlined" : "contained"
+                  }
+                  color={category.status === "Active" ? "error" : "primary"}
+                  disabled={
+                    statusAction.isPending ||
+                    updateCategory.isPending ||
+                    categoryQuery.isFetching
+                  }
+                  onClick={handleOpenStatusDialog}
+                >
+                  {category.status === "Active"
+                    ? "Deactivate category"
+                    : "Activate category"}
+                </Button>
+              </>
             )}
 
             <Button
@@ -199,6 +278,68 @@ export function ProductCategoryDetailsPage() {
           />
         )}
       </Stack>
+
+      <Dialog
+        open={pendingStatusAction !== null}
+        onClose={handleCloseStatusDialog}
+        aria-labelledby="product-category-status-dialog-title"
+      >
+        <DialogTitle id="product-category-status-dialog-title">
+          {isActivateAction
+            ? "Activate product category"
+            : "Deactivate product category"}
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            {isActivateAction
+              ? `Activate ${category?.name ?? "this category"}? It will become available for product assignment.`
+              : `Deactivate ${category?.name ?? "this category"}? It will no longer be available for new product assignments.`}
+          </DialogContentText>
+
+          {statusAction.isError && (
+            <Alert
+              severity="error"
+              sx={{ mt: 2 }}
+              action={
+                isConcurrencyConflict ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={handleReloadCategory}
+                  >
+                    Reload category
+                  </Button>
+                ) : undefined
+              }
+            >
+              {getStatusActionErrorMessage(statusAction.error)}
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            disabled={statusAction.isPending}
+            onClick={handleCloseStatusDialog}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            color={isActivateAction ? "primary" : "error"}
+            disabled={statusAction.isPending}
+            onClick={handleConfirmStatusAction}
+          >
+            {statusAction.isPending
+              ? "Saving..."
+              : isActivateAction
+                ? "Activate category"
+                : "Deactivate category"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -235,6 +376,18 @@ function getErrorMessage(error) {
   }
 
   return "Unable to load product category details.";
+}
+
+function getStatusActionErrorMessage(error) {
+  if (error instanceof ApiError && error.status === 409) {
+    return "The product category was changed by another request. Reload it before trying again.";
+  }
+
+  if (error instanceof ApiError) {
+    return error.detail;
+  }
+
+  return "Unable to change the product category status.";
 }
 
 function formatDate(value) {

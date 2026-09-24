@@ -10,6 +10,9 @@ const refetchMock = vi.hoisted(() => vi.fn());
 const useUpdateProductCategoryDetailsMock = vi.hoisted(() => vi.fn());
 const mutateAsyncMock = vi.hoisted(() => vi.fn());
 const resetMutationMock = vi.hoisted(() => vi.fn());
+const useProductCategoryStatusActionMock = vi.hoisted(() => vi.fn());
+const statusMutateMock = vi.hoisted(() => vi.fn());
+const statusResetMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProductCategory", () => ({
   useProductCategory: useProductCategoryMock,
@@ -17,6 +20,10 @@ vi.mock("../hooks/useProductCategory", () => ({
 
 vi.mock("../hooks/useUpdateProductCategoryDetails", () => ({
   useUpdateProductCategoryDetails: useUpdateProductCategoryDetailsMock,
+}));
+
+vi.mock("../hooks/useProductCategoryStatusAction", () => ({
+  useProductCategoryStatusAction: useProductCategoryStatusActionMock,
 }));
 
 const productCategoryId = "77777777-7777-7777-7777-777777777777";
@@ -73,12 +80,22 @@ describe("ProductCategoryDetailsPage", () => {
     useUpdateProductCategoryDetailsMock.mockReset();
     mutateAsyncMock.mockReset();
     resetMutationMock.mockReset();
+    useProductCategoryStatusActionMock.mockReset();
+    statusMutateMock.mockReset();
+    statusResetMock.mockReset();
     mutateAsyncMock.mockResolvedValue(undefined);
     useUpdateProductCategoryDetailsMock.mockReturnValue({
       isPending: false,
       error: null,
       mutateAsync: mutateAsyncMock,
       reset: resetMutationMock,
+    });
+    useProductCategoryStatusActionMock.mockReturnValue({
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: statusMutateMock,
+      reset: statusResetMock,
     });
   });
 
@@ -204,5 +221,84 @@ describe("ProductCategoryDetailsPage", () => {
 
     expect(refetchMock).toHaveBeenCalledOnce();
     expect(resetMutationMock).toHaveBeenCalled();
+  });
+
+  it("confirms deactivation with the latest row version", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: details });
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", { name: "Deactivate category" }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Deactivate product category" }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Deactivate category" }),
+    );
+
+    expect(statusMutateMock).toHaveBeenCalledWith(
+      { action: "deactivate", rowVersion: details.rowVersion },
+      { onSuccess: expect.any(Function) },
+    );
+  });
+
+  it("offers activation for an inactive category", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: { ...details, status: "Inactive" } });
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Activate category" }));
+    expect(
+      screen.getByRole("dialog", { name: "Activate product category" }),
+    ).toBeInTheDocument();
+  });
+
+  it("reloads category details after a status conflict", async () => {
+    const user = userEvent.setup();
+    configureQuery({ data: details });
+    useProductCategoryStatusActionMock.mockReturnValue({
+      isPending: false,
+      isError: true,
+      error: new ApiError(
+        409,
+        "DEACTIVATE_PRODUCT_CATEGORY_CONCURRENCY_CONFLICT",
+        "Category changed.",
+      ),
+      mutate: statusMutateMock,
+      reset: statusResetMock,
+    });
+    renderPage();
+
+    await user.click(
+      screen.getByRole("button", { name: "Deactivate category" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The product category was changed by another request.",
+    );
+    await user.click(screen.getByRole("button", { name: "Reload category" }));
+
+    expect(refetchMock).toHaveBeenCalledOnce();
+    expect(statusResetMock).toHaveBeenCalled();
+  });
+
+  it("disables status actions while a request is running", () => {
+    configureQuery({ data: details });
+    useProductCategoryStatusActionMock.mockReturnValue({
+      isPending: true,
+      isError: false,
+      error: null,
+      mutate: statusMutateMock,
+      reset: statusResetMock,
+    });
+    renderPage();
+
+    expect(
+      screen.getByRole("button", { name: "Deactivate category" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Edit category" }),
+    ).toBeDisabled();
   });
 });
