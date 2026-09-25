@@ -102,6 +102,7 @@ app.MapActivateProductCategoryEndpoint();
 app.MapDeactivateProductCategoryEndpoint();
 app.MapListTaxCategoriesEndpoint();
 app.MapGetTaxCategoryByIdEndpoint();
+app.MapCreateTaxCategoryEndpoint();
 
 app.Run();
 

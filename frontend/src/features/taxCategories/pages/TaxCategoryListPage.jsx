@@ -23,6 +23,8 @@ import {
   Typography,
 } from "@mui/material";
 import { ApiError } from "../../../shared/api/ApiError";
+import { CreateTaxCategoryDialog } from "../components/CreateTaxCategoryDialog";
+import { useCreateTaxCategory } from "../hooks/useCreateTaxCategory";
 import { useTaxCategories } from "../hooks/useTaxCategories";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -31,7 +33,9 @@ export function TaxCategoryListPage() {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [status, setStatus] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const pageSize = 20;
+  const createMutation = useCreateTaxCategory();
 
   const taxCategoriesQuery = useTaxCategories({
     search: appliedSearch,
@@ -43,9 +47,28 @@ export function TaxCategoryListPage() {
   return (
     <Box component="main" sx={{ p: 4 }}>
       <Stack spacing={3}>
-        <Typography component="h1" variant="h4">
-          Tax categories
-        </Typography>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+          }}
+        >
+          <Typography component="h1" variant="h4">
+            Tax categories
+          </Typography>
+
+          <Button
+            variant="contained"
+            onClick={() => {
+              createMutation.reset();
+              setCreateDialogOpen(true);
+            }}
+          >
+            Create tax category
+          </Button>
+        </Stack>
 
         <Typography color="text.secondary">
           Review GST treatment, rates, and effective periods available to
@@ -201,6 +224,19 @@ export function TaxCategoryListPage() {
             </Stack>
           )}
       </Stack>
+
+      <CreateTaxCategoryDialog
+        open={createDialogOpen}
+        isPending={createMutation.isPending}
+        error={createMutation.error}
+        onClose={() => {
+          if (!createMutation.isPending) {
+            createMutation.reset();
+            setCreateDialogOpen(false);
+          }
+        }}
+        onSubmit={(request) => createMutation.mutateAsync(request)}
+      />
     </Box>
   );
 }
