@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\src\TradeFlow.Modules.Catalog\TradeFlow.Modules.Catalog.csproj" />
     <ProjectReference Include="..\..\src\TradeFlow.Modules.Identity\TradeFlow.Modules.Identity.csproj" />
     <ProjectReference Include="..\..\src\TradeFlow.Modules.Organisations\TradeFlow.Modules.Organisations.csproj" />
+    <ProjectReference Include="..\..\src\TradeFlow.Modules.Purchasing\TradeFlow.Modules.Purchasing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

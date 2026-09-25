@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using TradeFlow.Api.Endpoints.Catalog.Products;
 using TradeFlow.Api.Endpoints.Catalog.ProductCategories;
 using TradeFlow.Api.Endpoints.Catalog.TaxCategories;
+using TradeFlow.Api.Endpoints.Purchasing.Suppliers;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
 using TradeFlow.BuildingBlocks.Time;
@@ -9,6 +10,8 @@ using TradeFlow.Modules.Catalog;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Identity;
 using TradeFlow.Modules.Organisations;
+using TradeFlow.Modules.Purchasing;
+using TradeFlow.Modules.Purchasing.Infrastructure.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,7 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddIdentityModule();
 builder.Services.AddOrganisationsModule();
 builder.Services.AddCatalogModule(builder.Configuration);
+builder.Services.AddPurchasingModule(builder.Configuration);
 
 string[] allowedOrigins =
     builder.Configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>()
@@ -43,6 +47,12 @@ builder.Services
     .AddHealthChecks()
     .AddDbContextCheck<CatalogDbContext>(
         name: "sqlserver",
+        tags: ["ready"]);
+
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<PurchasingDbContext>(
+        name: "purchasing-sqlserver",
         tags: ["ready"]);
 
 WebApplication app = builder.Build();
@@ -103,6 +113,8 @@ app.MapDeactivateProductCategoryEndpoint();
 app.MapListTaxCategoriesEndpoint();
 app.MapGetTaxCategoryByIdEndpoint();
 app.MapCreateTaxCategoryEndpoint();
+app.MapCreateSupplierEndpoint();
+app.MapListSuppliersEndpoint();
 
 app.Run();
 

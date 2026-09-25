@@ -7,6 +7,7 @@ import { ProductListPage } from "./features/products/pages/ProductListPage";
 import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
 import { TaxCategoryListPage } from "./features/taxCategories/pages/TaxCategoryListPage";
 import { TaxCategoryDetailsPage } from "./features/taxCategories/pages/TaxCategoryDetailsPage";
+import { SupplierListPage } from "./features/suppliers/pages/SupplierListPage";
 export default function App() {
   return (
     <Box
@@ -54,6 +55,10 @@ export default function App() {
               <Button component={NavLink} to="/tax-categories" variant="text">
                 Tax categories
               </Button>
+
+              <Button component={NavLink} to="/suppliers" variant="text">
+                Suppliers
+              </Button>
             </Stack>
           </Box>
 
@@ -78,6 +83,8 @@ export default function App() {
               path="/tax-categories/:taxCategoryId"
               element={<TaxCategoryDetailsPage />}
             />
+
+            <Route path="/suppliers" element={<SupplierListPage />} />
 
             <Route
               path="/products/:productId"

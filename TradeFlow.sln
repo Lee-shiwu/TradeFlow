@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeFlow.IntegrationTests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeFlow.ArchitectureTests", "backend\tests\TradeFlow.ArchitectureTests\TradeFlow.ArchitectureTests.csproj", "{53349B62-8D20-45E0-A840-79703561AF17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeFlow.Modules.Purchasing", "backend\src\TradeFlow.Modules.Purchasing\TradeFlow.Modules.Purchasing.csproj", "{685C587C-BAE8-467F-B554-717A3283B08D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +133,18 @@ Global
 		{53349B62-8D20-45E0-A840-79703561AF17}.Release|x64.Build.0 = Release|Any CPU
 		{53349B62-8D20-45E0-A840-79703561AF17}.Release|x86.ActiveCfg = Release|Any CPU
 		{53349B62-8D20-45E0-A840-79703561AF17}.Release|x86.Build.0 = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|x64.Build.0 = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Debug|x86.Build.0 = Debug|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|x64.ActiveCfg = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|x64.Build.0 = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|x86.ActiveCfg = Release|Any CPU
+		{685C587C-BAE8-467F-B554-717A3283B08D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -146,5 +160,6 @@ Global
 		{6059E548-DD3E-403A-90D0-3DA442CFD2D8} = {F57642F3-C37C-D174-720E-6A6AAD5BEE22}
 		{FAC20476-245C-4C00-BFC5-4A319F49EBED} = {F57642F3-C37C-D174-720E-6A6AAD5BEE22}
 		{53349B62-8D20-45E0-A840-79703561AF17} = {F57642F3-C37C-D174-720E-6A6AAD5BEE22}
+		{685C587C-BAE8-467F-B554-717A3283B08D} = {0F9113EE-888A-26D2-68B0-4A7D0A2A8745}
 	EndGlobalSection
 EndGlobal

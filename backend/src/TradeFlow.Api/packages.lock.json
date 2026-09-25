@@ -397,6 +397,13 @@
           "TradeFlow.BuildingBlocks": "[1.0.0, )"
         }
       },
+      "tradeflow.modules.purchasing": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.10, )",
+          "TradeFlow.BuildingBlocks": "[1.0.0, )"
+        }
+      },
       "Microsoft.EntityFrameworkCore.SqlServer": {
         "type": "CentralTransitive",
         "requested": "[10.0.10, )",

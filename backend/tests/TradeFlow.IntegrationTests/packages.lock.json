@@ -630,7 +630,8 @@
           "TradeFlow.BuildingBlocks": "[1.0.0, )",
           "TradeFlow.Modules.Catalog": "[1.0.0, )",
           "TradeFlow.Modules.Identity": "[1.0.0, )",
-          "TradeFlow.Modules.Organisations": "[1.0.0, )"
+          "TradeFlow.Modules.Organisations": "[1.0.0, )",
+          "TradeFlow.Modules.Purchasing": "[1.0.0, )"
         }
       },
       "tradeflow.buildingblocks": {
@@ -655,6 +656,15 @@
       "tradeflow.modules.organisations": {
         "type": "Project",
         "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.10, )",
+          "TradeFlow.BuildingBlocks": "[1.0.0, )"
+        }
+      },
+      "tradeflow.modules.purchasing": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.SqlServer": "[10.0.10, )",
+          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.10, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.10, )",
           "TradeFlow.BuildingBlocks": "[1.0.0, )"
         }

@@ -2,6 +2,7 @@ using System.Reflection;
 using TradeFlow.Modules.Catalog;
 using TradeFlow.Modules.Identity;
 using TradeFlow.Modules.Organisations;
+using TradeFlow.Modules.Purchasing;
 
 namespace TradeFlow.ArchitectureTests;
 
@@ -13,6 +14,7 @@ public sealed class ModuleDependencyTests
             typeof(CatalogModule).Assembly,
             typeof(IdentityModule).Assembly,
             typeof(OrganisationsModule).Assembly,
+            typeof(PurchasingModule).Assembly,
         };
 
     [Theory]

@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TradeFlow.BuildingBlocks\TradeFlow.BuildingBlocks.csproj" />
     <ProjectReference Include="..\..\src\TradeFlow.Modules.Catalog\TradeFlow.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\TradeFlow.Modules.Purchasing\TradeFlow.Modules.Purchasing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
