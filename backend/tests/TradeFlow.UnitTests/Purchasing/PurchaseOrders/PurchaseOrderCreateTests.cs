@@ -111,6 +111,32 @@ public sealed class PurchaseOrderCreateTests
         Assert.Equal("PURCHASE_ORDER_ALREADY_CONFIRMED", exception.Code);
     }
 
+    [Fact]
+    public void Receive_WithConfirmedOrder_RecordsAuditAndChangesStatus()
+    {
+        PurchaseOrder order = CreateValidOrder();
+        order.Confirm(CreatedAt.AddHours(1), Guid.NewGuid());
+        Guid receivedBy = Guid.NewGuid();
+        DateTimeOffset receivedAt = CreatedAt.AddHours(2);
+
+        order.Receive(receivedAt, receivedBy);
+
+        Assert.Equal(PurchaseOrderStatus.Received, order.Status);
+        Assert.Equal(receivedAt, order.ReceivedAt);
+        Assert.Equal(receivedBy, order.ReceivedBy);
+    }
+
+    [Fact]
+    public void Receive_WithDraftOrder_ThrowsBusinessRule()
+    {
+        PurchaseOrder order = CreateValidOrder();
+
+        BusinessRuleException exception = Assert.Throws<BusinessRuleException>(() =>
+            order.Receive(CreatedAt.AddHours(1), Guid.NewGuid()));
+
+        Assert.Equal("PURCHASE_ORDER_NOT_CONFIRMED", exception.Code);
+    }
+
     private static PurchaseOrder CreateValidOrder() =>
         PurchaseOrder.Create(
             Guid.NewGuid(),

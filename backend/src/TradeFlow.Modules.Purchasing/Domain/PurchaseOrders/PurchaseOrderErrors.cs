@@ -26,4 +26,8 @@ internal static class PurchaseOrderErrors
     internal const string ConfirmedByRequiredMessage = "Confirmed by is required.";
     internal const string AlreadyConfirmedCode = "PURCHASE_ORDER_ALREADY_CONFIRMED";
     internal const string AlreadyConfirmedMessage = "The purchase order is already confirmed.";
+    internal const string NotConfirmedCode = "PURCHASE_ORDER_NOT_CONFIRMED";
+    internal const string NotConfirmedMessage = "Only a confirmed purchase order can be received.";
+    internal const string ReceivedByRequiredCode = "PURCHASE_ORDER_RECEIVED_BY_REQUIRED";
+    internal const string ReceivedByRequiredMessage = "Received by is required.";
 }

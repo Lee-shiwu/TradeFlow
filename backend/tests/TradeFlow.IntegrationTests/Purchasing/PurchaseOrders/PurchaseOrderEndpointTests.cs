@@ -7,6 +7,7 @@ using TradeFlow.Modules.Catalog.Domain.Products;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Purchasing.Domain.Suppliers;
 using TradeFlow.Modules.Purchasing.Infrastructure.Persistence;
+using TradeFlow.Modules.Purchasing.Application.Inventory.ListStock;
 
 namespace TradeFlow.IntegrationTests.Purchasing.PurchaseOrders;
 
@@ -88,12 +89,40 @@ public sealed class PurchaseOrderEndpointTests(ApiFactory factory)
             JsonElement confirmed = await confirmResponse.Content.ReadFromJsonAsync<JsonElement>();
             Assert.Equal("Confirmed", confirmed.GetProperty("status").GetString());
             Assert.Equal(userId, confirmed.GetProperty("confirmedBy").GetGuid());
+            string confirmedRowVersion = confirmed.GetProperty("rowVersion").GetString()!;
+
+            HttpResponseMessage receiveResponse = await client.PostAsJsonAsync(
+                $"/api/v1/purchasing/purchase-orders/{orderId}/receive",
+                new { rowVersion = confirmedRowVersion });
+            Assert.Equal(HttpStatusCode.OK, receiveResponse.StatusCode);
+            JsonElement receipt = await receiveResponse.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(orderId, receipt.GetProperty("purchaseOrderId").GetGuid());
+            Assert.Equal(2m, receipt.GetProperty("lines")[0].GetProperty("quantityReceived").GetDecimal());
 
             JsonElement details = await client.GetFromJsonAsync<JsonElement>(
                 $"/api/v1/purchasing/purchase-orders/{orderId}");
             Assert.Equal(supplier.Code, details.GetProperty("supplierCode").GetString());
             Assert.Equal(product.Sku, details.GetProperty("lines")[0].GetProperty("productSku").GetString());
-            Assert.Equal("Confirmed", details.GetProperty("status").GetString());
+            Assert.Equal("Received", details.GetProperty("status").GetString());
+
+            using IServiceScope inventoryScope = factory.Services.CreateScope();
+            ListStockHandler stockHandler =
+                inventoryScope.ServiceProvider.GetRequiredService<ListStockHandler>();
+            ListStockResult directStock = await stockHandler.HandleAsync(
+                new ListStockQuery(organisationId, product.Sku, 1, 20),
+                CancellationToken.None);
+            Assert.Equal(2m, Assert.Single(directStock.Items).QuantityOnHand);
+
+            HttpResponseMessage stockResponse = await client.GetAsync(
+                $"/api/v1/inventory/stock?search={product.Sku}&pageNumber=1&pageSize=20");
+            string stockBody = await stockResponse.Content.ReadAsStringAsync();
+            Assert.True(
+                stockResponse.IsSuccessStatusCode,
+                $"Inventory request failed with {(int)stockResponse.StatusCode}: {stockBody}");
+            JsonElement stock = JsonSerializer.Deserialize<JsonElement>(stockBody);
+            Assert.Equal(1, stock.GetProperty("totalCount").GetInt32());
+            Assert.Equal(product.Id, stock.GetProperty("items")[0].GetProperty("productId").GetGuid());
+            Assert.Equal(2m, stock.GetProperty("items")[0].GetProperty("quantityOnHand").GetDecimal());
         }
         finally
         {

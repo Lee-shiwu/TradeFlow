@@ -5,6 +5,8 @@ using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.CreatePurchaseOrde
 using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.ConfirmPurchaseOrder;
 using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.GetPurchaseOrderById;
 using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.ListPurchaseOrders;
+using TradeFlow.Modules.Purchasing.Application.GoodsReceipts.ReceivePurchaseOrder;
+using TradeFlow.Modules.Purchasing.Application.Inventory.ListStock;
 using TradeFlow.Modules.Purchasing.Application.Suppliers.CreateSupplier;
 using TradeFlow.Modules.Purchasing.Application.Suppliers.ListSuppliers;
 using TradeFlow.Modules.Purchasing.Infrastructure.Persistence;
@@ -44,6 +46,8 @@ public static class PurchasingModule
         services.AddScoped<ConfirmPurchaseOrderHandler>();
         services.AddScoped<GetPurchaseOrderByIdHandler>();
         services.AddScoped<ListPurchaseOrdersHandler>();
+        services.AddScoped<ReceivePurchaseOrderHandler>();
+        services.AddScoped<ListStockHandler>();
 
         return services;
     }

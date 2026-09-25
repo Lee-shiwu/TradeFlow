@@ -24,6 +24,7 @@ import { ApiError } from "../../../shared/api/ApiError";
 import { CreatePurchaseOrderDialog } from "../components/CreatePurchaseOrderDialog";
 import { useCreatePurchaseOrder } from "../hooks/useCreatePurchaseOrder";
 import { useConfirmPurchaseOrder } from "../hooks/useConfirmPurchaseOrder";
+import { useReceivePurchaseOrder } from "../hooks/useReceivePurchaseOrder";
 import { usePurchaseOrders } from "../hooks/usePurchaseOrders";
 
 export function PurchaseOrderListPage() {
@@ -50,6 +51,7 @@ export function PurchaseOrderListPage() {
   });
   const createMutation = useCreatePurchaseOrder();
   const confirmMutation = useConfirmPurchaseOrder();
+  const receiveMutation = useReceivePurchaseOrder();
   const referenceDataReady = Boolean(suppliersQuery.data && productsQuery.data);
 
   return (
@@ -131,6 +133,11 @@ export function PurchaseOrderListPage() {
             {getErrorMessage(confirmMutation.error)}
           </Alert>
         )}
+        {receiveMutation.isError && (
+          <Alert severity="error">
+            {getErrorMessage(receiveMutation.error)}
+          </Alert>
+        )}
         {ordersQuery.data?.items.length === 0 && (
           <Alert severity="info">No purchase orders found.</Alert>
         )}
@@ -182,6 +189,22 @@ export function PurchaseOrderListPage() {
                             {confirmMutation.isPending
                               ? "Confirming..."
                               : "Confirm"}
+                          </Button>
+                        )}
+                        {order.status === "Confirmed" && (
+                          <Button
+                            size="small"
+                            disabled={receiveMutation.isPending}
+                            onClick={() =>
+                              receiveMutation.mutate({
+                                purchaseOrderId: order.purchaseOrderId,
+                                rowVersion: order.rowVersion,
+                              })
+                            }
+                          >
+                            {receiveMutation.isPending
+                              ? "Receiving..."
+                              : "Receive"}
                           </Button>
                         )}
                       </TableCell>

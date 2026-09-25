@@ -16,6 +16,8 @@ public sealed class PurchaseOrder
     public Guid CreatedBy { get; private set; }
     public DateTimeOffset? ConfirmedAt { get; private set; }
     public Guid? ConfirmedBy { get; private set; }
+    public DateTimeOffset? ReceivedAt { get; private set; }
+    public Guid? ReceivedBy { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
     public IReadOnlyCollection<PurchaseOrderLine> Lines => _lines;
     public decimal TotalAmount => _lines.Sum(line => line.LineTotal);
@@ -67,6 +69,8 @@ public sealed class PurchaseOrder
                 CreatedBy = createdBy,
                 ConfirmedAt = null,
                 ConfirmedBy = null,
+                ReceivedAt = null,
+                ReceivedBy = null,
                 RowVersion = [],
             };
 
@@ -93,6 +97,25 @@ public sealed class PurchaseOrder
         Status = PurchaseOrderStatus.Confirmed;
         ConfirmedAt = confirmedAt.ToUniversalTime();
         ConfirmedBy = confirmedBy;
+    }
+
+    public void Receive(DateTimeOffset receivedAt, Guid receivedBy)
+    {
+        ValidateRequiredIdentifier(
+            receivedBy,
+            PurchaseOrderErrors.ReceivedByRequiredCode,
+            PurchaseOrderErrors.ReceivedByRequiredMessage);
+
+        if (Status != PurchaseOrderStatus.Confirmed)
+        {
+            throw new BusinessRuleException(
+                PurchaseOrderErrors.NotConfirmedCode,
+                PurchaseOrderErrors.NotConfirmedMessage);
+        }
+
+        Status = PurchaseOrderStatus.Received;
+        ReceivedAt = receivedAt.ToUniversalTime();
+        ReceivedBy = receivedBy;
     }
 
     private static string NormalizeReference(string reference)

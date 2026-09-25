@@ -9,6 +9,7 @@ import { TaxCategoryListPage } from "./features/taxCategories/pages/TaxCategoryL
 import { TaxCategoryDetailsPage } from "./features/taxCategories/pages/TaxCategoryDetailsPage";
 import { SupplierListPage } from "./features/suppliers/pages/SupplierListPage";
 import { PurchaseOrderListPage } from "./features/purchaseOrders/pages/PurchaseOrderListPage";
+import { StockListPage } from "./features/inventory/pages/StockListPage";
 export default function App() {
   return (
     <Box
@@ -64,6 +65,10 @@ export default function App() {
               <Button component={NavLink} to="/purchase-orders" variant="text">
                 Purchase orders
               </Button>
+
+              <Button component={NavLink} to="/inventory" variant="text">
+                Inventory
+              </Button>
             </Stack>
           </Box>
 
@@ -94,6 +99,7 @@ export default function App() {
               path="/purchase-orders"
               element={<PurchaseOrderListPage />}
             />
+            <Route path="/inventory" element={<StockListPage />} />
 
             <Route
               path="/products/:productId"

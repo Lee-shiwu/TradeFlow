@@ -4,6 +4,8 @@ using TradeFlow.Api.Endpoints.Catalog.ProductCategories;
 using TradeFlow.Api.Endpoints.Catalog.TaxCategories;
 using TradeFlow.Api.Endpoints.Purchasing.Suppliers;
 using TradeFlow.Api.Endpoints.Purchasing.PurchaseOrders;
+using TradeFlow.Api.Endpoints.Purchasing.GoodsReceipts;
+using TradeFlow.Api.Endpoints.Inventory;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
 using TradeFlow.Api.Infrastructure.Purchasing;
@@ -123,6 +125,8 @@ app.MapCreatePurchaseOrderEndpoint();
 app.MapListPurchaseOrdersEndpoint();
 app.MapGetPurchaseOrderByIdEndpoint();
 app.MapConfirmPurchaseOrderEndpoint();
+app.MapReceivePurchaseOrderEndpoint();
+app.MapListStockEndpoint();
 
 app.Run();
 
