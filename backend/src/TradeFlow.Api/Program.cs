@@ -3,14 +3,17 @@ using TradeFlow.Api.Endpoints.Catalog.Products;
 using TradeFlow.Api.Endpoints.Catalog.ProductCategories;
 using TradeFlow.Api.Endpoints.Catalog.TaxCategories;
 using TradeFlow.Api.Endpoints.Purchasing.Suppliers;
+using TradeFlow.Api.Endpoints.Purchasing.PurchaseOrders;
 using TradeFlow.Api.Infrastructure.Errors;
 using TradeFlow.Api.Infrastructure.Health;
+using TradeFlow.Api.Infrastructure.Purchasing;
 using TradeFlow.BuildingBlocks.Time;
 using TradeFlow.Modules.Catalog;
 using TradeFlow.Modules.Catalog.Infrastructure.Persistence;
 using TradeFlow.Modules.Identity;
 using TradeFlow.Modules.Organisations;
 using TradeFlow.Modules.Purchasing;
+using TradeFlow.Modules.Purchasing.Application.PurchaseOrders;
 using TradeFlow.Modules.Purchasing.Infrastructure.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -24,6 +27,7 @@ builder.Services.AddIdentityModule();
 builder.Services.AddOrganisationsModule();
 builder.Services.AddCatalogModule(builder.Configuration);
 builder.Services.AddPurchasingModule(builder.Configuration);
+builder.Services.AddScoped<IProductForPurchasingReader, CatalogProductForPurchasingReader>();
 
 string[] allowedOrigins =
     builder.Configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>()
@@ -115,6 +119,9 @@ app.MapGetTaxCategoryByIdEndpoint();
 app.MapCreateTaxCategoryEndpoint();
 app.MapCreateSupplierEndpoint();
 app.MapListSuppliersEndpoint();
+app.MapCreatePurchaseOrderEndpoint();
+app.MapListPurchaseOrdersEndpoint();
+app.MapGetPurchaseOrderByIdEndpoint();
 
 app.Run();
 

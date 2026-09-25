@@ -8,6 +8,7 @@ import { SystemStatusPage } from "./features/system/pages/SystemStatusPage";
 import { TaxCategoryListPage } from "./features/taxCategories/pages/TaxCategoryListPage";
 import { TaxCategoryDetailsPage } from "./features/taxCategories/pages/TaxCategoryDetailsPage";
 import { SupplierListPage } from "./features/suppliers/pages/SupplierListPage";
+import { PurchaseOrderListPage } from "./features/purchaseOrders/pages/PurchaseOrderListPage";
 export default function App() {
   return (
     <Box
@@ -59,6 +60,10 @@ export default function App() {
               <Button component={NavLink} to="/suppliers" variant="text">
                 Suppliers
               </Button>
+
+              <Button component={NavLink} to="/purchase-orders" variant="text">
+                Purchase orders
+              </Button>
             </Stack>
           </Box>
 
@@ -85,6 +90,10 @@ export default function App() {
             />
 
             <Route path="/suppliers" element={<SupplierListPage />} />
+            <Route
+              path="/purchase-orders"
+              element={<PurchaseOrderListPage />}
+            />
 
             <Route
               path="/products/:productId"

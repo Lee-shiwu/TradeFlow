@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.CreatePurchaseOrder;
+using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.GetPurchaseOrderById;
+using TradeFlow.Modules.Purchasing.Application.PurchaseOrders.ListPurchaseOrders;
 using TradeFlow.Modules.Purchasing.Application.Suppliers.CreateSupplier;
 using TradeFlow.Modules.Purchasing.Application.Suppliers.ListSuppliers;
 using TradeFlow.Modules.Purchasing.Infrastructure.Persistence;
@@ -36,6 +39,9 @@ public static class PurchasingModule
 
         services.AddScoped<CreateSupplierHandler>();
         services.AddScoped<ListSuppliersHandler>();
+        services.AddScoped<CreatePurchaseOrderHandler>();
+        services.AddScoped<GetPurchaseOrderByIdHandler>();
+        services.AddScoped<ListPurchaseOrdersHandler>();
 
         return services;
     }
