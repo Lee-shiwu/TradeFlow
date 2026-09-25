@@ -41,7 +41,23 @@ docker compose `
   ps
 ```
 
-### 2. API
+### 2. 数据库迁移
+
+第一次启动或仓库新增迁移后，分别应用Catalog和Purchasing模块迁移：
+
+```powershell
+dotnet ef database update `
+  --project backend/src/TradeFlow.Modules.Catalog/TradeFlow.Modules.Catalog.csproj `
+  --startup-project backend/src/TradeFlow.Api/TradeFlow.Api.csproj `
+  --context TradeFlow.Modules.Catalog.Infrastructure.Persistence.CatalogDbContext
+
+dotnet ef database update `
+  --project backend/src/TradeFlow.Modules.Purchasing/TradeFlow.Modules.Purchasing.csproj `
+  --startup-project backend/src/TradeFlow.Api/TradeFlow.Api.csproj `
+  --context TradeFlow.Modules.Purchasing.Infrastructure.Persistence.PurchasingDbContext
+```
+
+### 3. API
 
 打开第二个终端：
 
@@ -59,7 +75,7 @@ http://localhost:6280/health/ready
 http://localhost:6280/openapi/v1.json
 ```
 
-### 3. React
+### 4. React
 
 打开第三个终端：
 

@@ -4,18 +4,18 @@ TradeFlow is a multi-organisation trade operations platform designed for New Zea
 
 The repository demonstrates how I approach production-oriented software: business rules are modelled explicitly, module boundaries are enforced, concurrent updates are handled safely, and each vertical slice is delivered with API, UI, persistence, and automated tests.
 
-> **Current delivery focus:** the Catalog module is implemented end to end. Broader purchasing, inventory, sales, invoicing, and integration capabilities are documented in the roadmap and are not presented as completed features.
+> **Current delivery focus:** a deliberately small purchase-to-stock workflow is implemented end to end: maintain catalog data and suppliers, create and confirm a purchase order, receive it, and inspect the resulting stock. Broader ERP capabilities remain roadmap items and are not presented as completed features.
 
 ## Highlights
 
-- **Modular monolith:** clear `Identity`, `Organisations`, and `Catalog` boundaries without the operational cost of premature microservices.
+- **Modular monolith:** clear `Identity`, `Organisations`, `Catalog`, and `Purchasing` boundaries without the operational cost of premature microservices.
 - **End-to-end vertical slices:** React UI, ASP.NET Core Minimal APIs, application handlers, domain rules, EF Core persistence, and SQL Server.
 - **Multi-tenant data isolation:** organisation-scoped queries and tests prevent cross-organisation access.
 - **Safe concurrent editing:** SQL Server `rowversion`, Base64 API contracts, EF Core optimistic concurrency, and user-facing conflict recovery.
 - **Auditable business changes:** created/modified timestamps and user identifiers are maintained by domain operations.
 - **Consistent API failures:** RFC-style Problem Details responses include stable business error codes and trace IDs.
 - **Operational readiness:** liveness/readiness endpoints, database health checks, locked dependencies, Docker-based local infrastructure, and GitHub Actions CI.
-- **Automated quality gates:** architecture, unit, integration, API, hook, component, and page tests. The current committed revision passes **707 automated tests** (520 backend and 187 frontend).
+- **Automated quality gates:** architecture, unit, integration, API, hook, component, and page tests. The current committed revision passes **836 automated tests** (590 backend and 246 frontend).
 
 ## Implemented Features
 
@@ -45,6 +45,16 @@ The repository demonstrates how I approach production-oriented software: busines
 - Responsive Material UI pages with explicit loading, empty, error, and retry states.
 - TanStack Query caching and invalidation after mutations.
 
+### Purchasing and inventory MVP
+
+- Create organisation-scoped suppliers with normalised, unique codes.
+- Search, filter, and paginate suppliers.
+- Create draft purchase orders with one or more active products.
+- Confirm orders with SQL Server `rowversion` concurrency protection.
+- Receive a confirmed order once using a deliberately small full-receipt workflow.
+- Append an immutable stock transaction for every received line.
+- Calculate current stock from the transaction ledger and display it in the React UI.
+
 ## Architecture
 
 ```mermaid
@@ -56,7 +66,9 @@ flowchart LR
         Api --> Identity[Identity module]
         Api --> Organisations[Organisations module]
         Api --> Catalog[Catalog module]
+        Api --> Purchasing[Purchasing module]
         Catalog --> Application[Application handlers]
+        Purchasing --> Application
         Application --> Domain[Domain model and rules]
         Catalog --> Infrastructure[EF Core infrastructure]
     end
@@ -100,7 +112,8 @@ TradeFlow/
 |  |  |- TradeFlow.BuildingBlocks/
 |  |  |- TradeFlow.Modules.Catalog/
 |  |  |- TradeFlow.Modules.Identity/
-|  |  `- TradeFlow.Modules.Organisations/
+|  |  |- TradeFlow.Modules.Organisations/
+|  |  `- TradeFlow.Modules.Purchasing/
 |  `- tests/
 |     |- TradeFlow.ArchitectureTests/
 |     |- TradeFlow.IntegrationTests/
@@ -149,7 +162,23 @@ docker compose `
   up -d
 ```
 
-### 3. Start the API
+### 3. Apply database migrations
+
+Run both module migration sets after first creating the database and whenever migrations change:
+
+```powershell
+dotnet ef database update `
+  --project backend/src/TradeFlow.Modules.Catalog/TradeFlow.Modules.Catalog.csproj `
+  --startup-project backend/src/TradeFlow.Api/TradeFlow.Api.csproj `
+  --context TradeFlow.Modules.Catalog.Infrastructure.Persistence.CatalogDbContext
+
+dotnet ef database update `
+  --project backend/src/TradeFlow.Modules.Purchasing/TradeFlow.Modules.Purchasing.csproj `
+  --startup-project backend/src/TradeFlow.Api/TradeFlow.Api.csproj `
+  --context TradeFlow.Modules.Purchasing.Infrastructure.Persistence.PurchasingDbContext
+```
+
+### 4. Start the API
 
 In a second terminal:
 
@@ -166,7 +195,7 @@ Useful endpoints:
 - Readiness: `http://localhost:6280/health/ready`
 - OpenAPI document: `http://localhost:6280/openapi/v1.json`
 
-### 4. Start the frontend
+### 5. Start the frontend
 
 In a third terminal:
 
@@ -177,6 +206,19 @@ pnpm dev
 ```
 
 Open `http://localhost:6173`. Vite proxies `/api` and `/health` requests to the local API.
+
+## Demonstrating the Minimum Workflow
+
+Use one temporary organisation throughout the demo (the IDs are configured in `frontend/.env`):
+
+1. Open **Products** and ensure at least one active product exists.
+2. Open **Suppliers** and create an active supplier.
+3. Open **Purchase orders**, create a draft order, and add the active product.
+4. Select **Confirm** on the draft order.
+5. Select **Receive** on the confirmed order. The MVP intentionally receives every line in full.
+6. Open **Inventory** and verify that quantity on hand equals the received quantity.
+
+This is the current runnable MVP. Partial receipts, warehouses, returns, sales, invoicing, and production identity are intentionally deferred until required.
 
 ## Verification
 
@@ -212,11 +254,12 @@ GitHub Actions runs equivalent backend and frontend pipelines for pull requests 
 
 The project is being delivered incrementally:
 
-1. Catalog master data and concurrency-safe workflows.
-2. Purchasing requests, approvals, orders, and receiving.
-3. Inventory movements, reservations, transfers, and stocktakes.
-4. Sales orders, fulfilment, invoicing, and credit notes.
-5. Entra ID, immutable auditing, notifications, and external integrations.
-6. Azure deployment, observability, backup/restore, and operational hardening.
+1. Catalog master data and concurrency-safe workflows. **Delivered.**
+2. Minimal suppliers, purchase orders, confirmation, and full receiving. **Delivered.**
+3. Minimal immutable stock movements and on-hand query. **Delivered.**
+4. Purchasing approvals, partial receipts, warehouses, reservations, transfers, and stocktakes.
+5. Sales orders, fulfilment, invoicing, and credit notes.
+6. Entra ID, immutable auditing, notifications, and external integrations.
+7. Azure deployment, observability, backup/restore, and operational hardening.
 
 This sequencing keeps every completed slice demonstrable and tested while preserving a clear path toward the wider business platform.
