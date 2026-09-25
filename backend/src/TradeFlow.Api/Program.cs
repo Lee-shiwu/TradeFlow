@@ -122,6 +122,7 @@ app.MapListSuppliersEndpoint();
 app.MapCreatePurchaseOrderEndpoint();
 app.MapListPurchaseOrdersEndpoint();
 app.MapGetPurchaseOrderByIdEndpoint();
+app.MapConfirmPurchaseOrderEndpoint();
 
 app.Run();
 

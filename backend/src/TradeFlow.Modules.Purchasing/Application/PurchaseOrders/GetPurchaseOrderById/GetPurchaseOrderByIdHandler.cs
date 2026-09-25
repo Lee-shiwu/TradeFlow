@@ -58,6 +58,8 @@ public sealed class GetPurchaseOrderByIdHandler(PurchasingDbContext dbContext)
             order.TotalAmount,
             order.CreatedAt,
             order.CreatedBy,
+            order.ConfirmedAt,
+            order.ConfirmedBy,
             order.RowVersion);
     }
 }

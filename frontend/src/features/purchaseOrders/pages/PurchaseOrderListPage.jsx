@@ -23,6 +23,7 @@ import { useSuppliers } from "../../suppliers/hooks/useSuppliers";
 import { ApiError } from "../../../shared/api/ApiError";
 import { CreatePurchaseOrderDialog } from "../components/CreatePurchaseOrderDialog";
 import { useCreatePurchaseOrder } from "../hooks/useCreatePurchaseOrder";
+import { useConfirmPurchaseOrder } from "../hooks/useConfirmPurchaseOrder";
 import { usePurchaseOrders } from "../hooks/usePurchaseOrders";
 
 export function PurchaseOrderListPage() {
@@ -48,6 +49,7 @@ export function PurchaseOrderListPage() {
     pageSize: 100,
   });
   const createMutation = useCreatePurchaseOrder();
+  const confirmMutation = useConfirmPurchaseOrder();
   const referenceDataReady = Boolean(suppliersQuery.data && productsQuery.data);
 
   return (
@@ -124,6 +126,11 @@ export function PurchaseOrderListPage() {
             {getErrorMessage(ordersQuery.error)}
           </Alert>
         )}
+        {confirmMutation.isError && (
+          <Alert severity="error">
+            {getErrorMessage(confirmMutation.error)}
+          </Alert>
+        )}
         {ordersQuery.data?.items.length === 0 && (
           <Alert severity="info">No purchase orders found.</Alert>
         )}
@@ -142,6 +149,7 @@ export function PurchaseOrderListPage() {
                     <TableCell align="right">Lines</TableCell>
                     <TableCell align="right">Total</TableCell>
                     <TableCell>Created at</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -159,6 +167,24 @@ export function PurchaseOrderListPage() {
                         {formatMoney(order.totalAmount)}
                       </TableCell>
                       <TableCell>{formatDate(order.createdAt)}</TableCell>
+                      <TableCell>
+                        {order.status === "Draft" && (
+                          <Button
+                            size="small"
+                            disabled={confirmMutation.isPending}
+                            onClick={() =>
+                              confirmMutation.mutate({
+                                purchaseOrderId: order.purchaseOrderId,
+                                rowVersion: order.rowVersion,
+                              })
+                            }
+                          >
+                            {confirmMutation.isPending
+                              ? "Confirming..."
+                              : "Confirm"}
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

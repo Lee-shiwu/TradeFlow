@@ -67,6 +67,8 @@ public static class CreatePurchaseOrderEndpoint
             result.TotalAmount,
             result.CreatedAt,
             result.CreatedBy,
+            null,
+            null,
             Convert.ToBase64String(result.RowVersion));
 
         return Results.Created(

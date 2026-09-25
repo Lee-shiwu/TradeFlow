@@ -56,6 +56,8 @@ public static class GetPurchaseOrderByIdEndpoint
             result.TotalAmount,
             result.CreatedAt,
             result.CreatedBy,
+            result.ConfirmedAt,
+            result.ConfirmedBy,
             Convert.ToBase64String(result.RowVersion)));
     }
 }

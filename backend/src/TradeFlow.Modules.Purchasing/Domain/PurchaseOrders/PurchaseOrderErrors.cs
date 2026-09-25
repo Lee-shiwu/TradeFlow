@@ -22,4 +22,8 @@ internal static class PurchaseOrderErrors
     internal const string UnitPriceInvalidMessage = "Unit price must be zero or greater and have at most four decimal places.";
     internal const string CreatedByRequiredCode = "PURCHASE_ORDER_CREATED_BY_REQUIRED";
     internal const string CreatedByRequiredMessage = "Created by is required.";
+    internal const string ConfirmedByRequiredCode = "PURCHASE_ORDER_CONFIRMED_BY_REQUIRED";
+    internal const string ConfirmedByRequiredMessage = "Confirmed by is required.";
+    internal const string AlreadyConfirmedCode = "PURCHASE_ORDER_ALREADY_CONFIRMED";
+    internal const string AlreadyConfirmedMessage = "The purchase order is already confirmed.";
 }

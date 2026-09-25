@@ -20,4 +20,5 @@ public sealed record ListPurchaseOrderItemResponse(
     PurchaseOrderStatus Status,
     int LineCount,
     decimal TotalAmount,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string RowVersion);

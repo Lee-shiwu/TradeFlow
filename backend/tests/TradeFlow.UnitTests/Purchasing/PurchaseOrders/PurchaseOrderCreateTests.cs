@@ -84,4 +84,39 @@ public sealed class PurchaseOrderCreateTests
 
         Assert.Equal(expectedCode, exception.Code);
     }
+
+    [Fact]
+    public void Confirm_WithDraftOrder_RecordsAuditAndChangesStatus()
+    {
+        PurchaseOrder order = CreateValidOrder();
+        Guid confirmedBy = Guid.NewGuid();
+        DateTimeOffset confirmedAt = CreatedAt.AddHours(1);
+
+        order.Confirm(confirmedAt, confirmedBy);
+
+        Assert.Equal(PurchaseOrderStatus.Confirmed, order.Status);
+        Assert.Equal(confirmedAt, order.ConfirmedAt);
+        Assert.Equal(confirmedBy, order.ConfirmedBy);
+    }
+
+    [Fact]
+    public void Confirm_WithConfirmedOrder_ThrowsBusinessRule()
+    {
+        PurchaseOrder order = CreateValidOrder();
+        order.Confirm(CreatedAt.AddHours(1), Guid.NewGuid());
+
+        BusinessRuleException exception = Assert.Throws<BusinessRuleException>(() =>
+            order.Confirm(CreatedAt.AddHours(2), Guid.NewGuid()));
+
+        Assert.Equal("PURCHASE_ORDER_ALREADY_CONFIRMED", exception.Code);
+    }
+
+    private static PurchaseOrder CreateValidOrder() =>
+        PurchaseOrder.Create(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "PO-1",
+            [new PurchaseOrderLineDraft(Guid.NewGuid(), "SKU", "Product", 1m, 1m)],
+            CreatedAt,
+            Guid.NewGuid());
 }

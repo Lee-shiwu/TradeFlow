@@ -47,7 +47,8 @@ public sealed class ListPurchaseOrdersHandler(PurchasingDbContext dbContext)
                     order.Status,
                     order.Lines.Count,
                     order.Lines.Sum(line => line.Quantity * line.UnitPrice),
-                    order.CreatedAt))
+                    order.CreatedAt,
+                    order.RowVersion))
                 .Skip(skip)
                 .Take(query.PageSize)
                 .ToListAsync(cancellationToken);

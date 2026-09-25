@@ -25,6 +25,7 @@
  * @property {number} lineCount
  * @property {number} totalAmount
  * @property {string} createdAt
+ * @property {string} rowVersion
  */
 
 /**

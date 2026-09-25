@@ -72,6 +72,7 @@ public sealed class PurchaseOrderEndpointTests(ApiFactory factory)
             Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
             JsonElement created = await createResponse.Content.ReadFromJsonAsync<JsonElement>();
             Guid orderId = created.GetProperty("purchaseOrderId").GetGuid();
+            string rowVersion = created.GetProperty("rowVersion").GetString()!;
             Assert.Equal("Draft", created.GetProperty("status").GetString());
             Assert.Equal(11m, created.GetProperty("totalAmount").GetDecimal());
 
@@ -80,10 +81,19 @@ public sealed class PurchaseOrderEndpointTests(ApiFactory factory)
             Assert.Equal(1, list.GetProperty("totalCount").GetInt32());
             Assert.Equal(orderId, list.GetProperty("items")[0].GetProperty("purchaseOrderId").GetGuid());
 
+            HttpResponseMessage confirmResponse = await client.PostAsJsonAsync(
+                $"/api/v1/purchasing/purchase-orders/{orderId}/confirm",
+                new { rowVersion });
+            Assert.Equal(HttpStatusCode.OK, confirmResponse.StatusCode);
+            JsonElement confirmed = await confirmResponse.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("Confirmed", confirmed.GetProperty("status").GetString());
+            Assert.Equal(userId, confirmed.GetProperty("confirmedBy").GetGuid());
+
             JsonElement details = await client.GetFromJsonAsync<JsonElement>(
                 $"/api/v1/purchasing/purchase-orders/{orderId}");
             Assert.Equal(supplier.Code, details.GetProperty("supplierCode").GetString());
             Assert.Equal(product.Sku, details.GetProperty("lines")[0].GetProperty("productSku").GetString());
+            Assert.Equal("Confirmed", details.GetProperty("status").GetString());
         }
         finally
         {

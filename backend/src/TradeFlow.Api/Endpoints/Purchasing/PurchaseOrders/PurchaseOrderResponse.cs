@@ -15,6 +15,8 @@ public sealed record PurchaseOrderResponse(
     decimal TotalAmount,
     DateTimeOffset CreatedAt,
     Guid CreatedBy,
+    DateTimeOffset? ConfirmedAt,
+    Guid? ConfirmedBy,
     string RowVersion);
 
 public sealed record PurchaseOrderLineResponse(

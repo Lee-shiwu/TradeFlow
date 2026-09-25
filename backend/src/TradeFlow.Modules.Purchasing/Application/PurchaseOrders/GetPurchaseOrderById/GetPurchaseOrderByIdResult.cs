@@ -13,4 +13,6 @@ public sealed record GetPurchaseOrderByIdResult(
     decimal TotalAmount,
     DateTimeOffset CreatedAt,
     Guid CreatedBy,
+    DateTimeOffset? ConfirmedAt,
+    Guid? ConfirmedBy,
     byte[] RowVersion);
