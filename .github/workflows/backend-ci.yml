@@ -26,10 +26,27 @@ permissions:
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_NOLOGO: "1"
+  TRADEFLOW_TEST_DB_CONNECTION_STRING: "Server=localhost,1433;Database=TradeFlowTests;User Id=sa;Password=TradeFlow_CI_2026!;Encrypt=True;TrustServerCertificate=True"
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: "Developer"
+          MSSQL_SA_PASSWORD: "TradeFlow_CI_2026!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'TradeFlow_CI_2026!' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
 
     steps:
       - name: Checkout

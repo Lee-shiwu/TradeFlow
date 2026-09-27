@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+env:
+  VITE_TEMP_ORGANISATION_ID: "00000000-0000-0000-0000-000000000001"
+  VITE_TEMP_USER_ID: "00000000-0000-0000-0000-000000000002"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
